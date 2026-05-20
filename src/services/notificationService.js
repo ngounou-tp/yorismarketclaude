@@ -2,10 +2,14 @@
  * Moteur de notifications Yorix — couche unique côté SPA.
  *
  * - `publishInAppNotification` : insert temps réel (Supabase + Realtime).
- * - Web Push / email / WhatsApp automatisés : déclenchés côté serveur
- *   (Edge Functions avec service role, ex. `confirm_checkout` → `dispatch_notification`).
+ * - Web Push : `dispatch_notification` (trigger auto après insert).
+ * - Email Resend : uniquement via webhook critique si catégorie éligible
+ *   (messages, commandes, paiements, livraison, sécurité) + opt-in `email_critical`.
+ *   Catalogue, nouveaux produits, stock, packs : in-app seulement.
  * - Ne jamais exposer `NOTIFY_DISPATCH_SECRET` dans le bundle client.
  */
+
+import { defaultCategoryForType, defaultPriorityForType } from "../lib/notificationChannels.js";
 
 /** @typedef {"in_app"|"push"|"email"|"whatsapp"} NotifyChannel */
 
@@ -44,8 +48,8 @@ export async function publishInAppNotification(client, p) {
     message: p.message ?? "",
     link: p.link ?? null,
     lu: false,
-    priority: p.priority || "standard",
-    category: p.category || "system",
+    priority: p.priority || defaultPriorityForType(p.type),
+    category: p.category || defaultCategoryForType(p.type),
     payload: meta,
   };
 

@@ -1,6 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 import { corsHeaders, ok } from "../_shared/cors.ts";
+import {
+  isHighUrgencyPush,
+  shouldTriggerEmailWebhook,
+} from "../_shared/notification_channels.ts";
 
 type PrefsRow = {
   push_enabled?: boolean | null;
@@ -45,9 +49,12 @@ function authorize(req: Request): boolean {
 function inferNotificationCategory(row: Record<string, unknown>): string {
   const c = row.category;
   if (typeof c === "string" && c.length > 0) return c;
+  const type = String(row.type || "").toLowerCase();
+  if (type === "new_product") return "catalog";
+  if (type === "pack_moderation" || type === "stock_alert") return "business";
   const blob = `${row.type || ""} ${row.title || ""} ${row.titre || ""} ${row.message || ""}`;
   if (/admin|superadmin|incident|réclamation|reclamation|staff yorix|paiement bloqué/i.test(blob)) return "admin";
-  if (/business|b2b|partenaire|pro corner|yorix business/i.test(blob)) return "business";
+  if (/business|b2b|partenaire|pro corner|yorix business|rupture de stock|produit en rupture/i.test(blob)) return "business";
   if (/payment|paiement|checkout|cinetpay|escrow/i.test(blob)) return "payments";
   if (/security|fraud|litige|connexion|login|suspicious/i.test(blob)) return "security";
   if (/deliver|livraison|livreur|shipping|colis/i.test(blob)) return "delivery";
@@ -60,11 +67,14 @@ function inferNotificationCategory(row: Record<string, unknown>): string {
 function inferPriority(row: Record<string, unknown>, category: string): string {
   const p = row.priority;
   if (typeof p === "string" && p.length > 0) return p;
-  if (category === "payments" || category === "security" || category === "admin") return "critical";
-  if (category === "delivery" || category === "orders" || category === "messages" || category === "business") {
-    return "important";
+  const type = String(row.type || "").toLowerCase();
+  if (type === "new_product" || type === "pack_moderation" || type === "stock_alert") return "standard";
+  if (category === "catalog" || category === "business" || category === "promotions") {
+    return category === "promotions" ? "promo" : "standard";
   }
-  if (category === "promotions") return "promo";
+  if (category === "payments" || category === "security") return "critical";
+  if (category === "admin") return "important";
+  if (category === "delivery" || category === "orders" || category === "messages") return "important";
   return "standard";
 }
 
@@ -189,9 +199,12 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(url, sr);
 
+  let notifRow: Record<string, unknown> | null = null;
+
   const fromRecord = body.record && typeof body.record === "object";
   if (fromRecord) {
     const r = body.record as Record<string, unknown>;
+    notifRow = r;
     notificationId = notificationId || String(r.id ?? "");
     userId = userId || String(r.user_id ?? "");
     title = rowTitle(r) || title;
@@ -209,12 +222,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (error) return ok({ error: error.message }, { status: 500 });
     if (!row) return ok({ error: "notification not found" }, { status: 404 });
+    notifRow = row as Record<string, unknown>;
     userId = row.user_id as string;
-    title = rowTitle(row as Record<string, unknown>) || title;
+    title = rowTitle(notifRow) || title;
     bodyText = (row.message as string) ?? bodyText;
     linkUrl = normalizeLinkUrl(row.link ?? linkUrl);
-    category = inferNotificationCategory(row as Record<string, unknown>);
-    priority = inferPriority(row as Record<string, unknown>, category);
+    category = inferNotificationCategory(notifRow);
+    priority = inferPriority(notifRow, category);
   }
 
   if (!userId) return ok({ error: "user_id or notification_id required" }, { status: 400 });
@@ -230,30 +244,53 @@ Deno.serve(async (req) => {
   const pushEnabled = prefs?.push_enabled !== false && prefs?.desktop_alerts !== false;
   const catOk = categoryPushAllowed(prefs ?? {}, category);
 
-  const isCritical =
-    priority === "critical" ||
-    category === "security" ||
-    category === "payments" ||
-    category === "admin";
-
-  const criticalPayload = {
-    event: "critical_notification",
-    user_id: userId,
-    notification_id: notificationId || null,
-    title,
-    body: bodyText,
-    url: linkUrl,
-    priority,
+  const policyRow: Record<string, unknown> = notifRow ?? {
+    type: body.type,
     category,
-    channels: {
-      email: prefs?.email_critical === true,
-      sms: prefs?.sms_critical === true,
-      whatsapp: prefs?.whatsapp_critical !== false,
-    },
+    priority,
+    title,
+    titre: title,
+    message: bodyText,
+    metadata: (body as { metadata?: unknown }).metadata,
+    payload: (body as { payload?: unknown }).payload,
   };
 
-  if (isCritical) {
-    await postCriticalWebhook(criticalPayload);
+  const emailWebhook = shouldTriggerEmailWebhook(policyRow, prefs);
+  const pushUrgent = isHighUrgencyPush(policyRow, category, priority);
+
+  if (emailWebhook) {
+    await postCriticalWebhook({
+      event: "critical_notification",
+      user_id: userId,
+      notification_id: notificationId || null,
+      title,
+      body: bodyText,
+      url: linkUrl,
+      priority,
+      category,
+      channels: {
+        email: true,
+        sms: prefs?.sms_critical === true,
+        whatsapp: prefs?.whatsapp_critical !== false,
+      },
+    });
+    await logDelivery(supabase, {
+      notification_id: notificationId || null,
+      user_id: userId,
+      channel: "email_webhook",
+      status: "sent",
+      detail: "critical_webhook",
+      meta: { category, priority },
+    });
+  } else {
+    await logDelivery(supabase, {
+      notification_id: notificationId || null,
+      user_id: userId,
+      channel: "email_webhook",
+      status: "skipped",
+      detail: "policy_in_app_only",
+      meta: { category, priority, type: policyRow.type },
+    });
   }
 
   const results: Record<string, unknown> = {
@@ -263,7 +300,8 @@ Deno.serve(async (req) => {
     push_attempted: false,
     push_sent: 0,
     push_failed: 0,
-    critical_webhook: isCritical,
+    email_webhook: emailWebhook,
+    push_urgency: pushUrgent ? "high" : "normal",
   };
 
   if (!pushEnabled || !catOk) {
@@ -316,8 +354,8 @@ Deno.serve(async (req) => {
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
         payload,
         {
-          TTL: isCritical ? 86400 : 3600,
-          urgency: isCritical ? "high" : "normal",
+          TTL: pushUrgent ? 86400 : 3600,
+          urgency: pushUrgent ? "high" : "normal",
         } as Record<string, string | number>,
       );
       results.push_sent = Number(results.push_sent) + 1;

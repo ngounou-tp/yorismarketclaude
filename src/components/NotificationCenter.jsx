@@ -13,6 +13,7 @@ import {
   saveNotificationPrefsHybrid,
 } from "../lib/notificationPrefs";
 import { supabase } from "../lib/supabase";
+import { EMAIL_POLICY_HINT_FR } from "../lib/notificationChannels";
 import { PushManager } from "./PushManager";
 import { EnablePushButton } from "./EnablePushButton";
 
@@ -327,6 +328,15 @@ export function NotificationCenter({
             />
             Son discret (si navigateur autorise)
           </label>
+          <label className="notif-toggle">
+            <input
+              type="checkbox"
+              checked={prefs.email}
+              onChange={(e) => updatePrefs({ email: e.target.checked })}
+            />
+            E-mails importants (commandes, messages, paiements, livraison)
+          </label>
+          <p className="notif-policy-hint">{EMAIL_POLICY_HINT_FR}</p>
         </div>
         {user?.id &&
           (variant === "page" ? (

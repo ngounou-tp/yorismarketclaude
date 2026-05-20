@@ -166,12 +166,13 @@ async function insertSellerNotification(
 
   await supabase.from("notifications").insert({
     user_id: vendeurId,
+    type: "stock_alert",
     titre: title,
     title,
     message,
     link,
     category: "business",
-    priority: variant === "final" || variant === "archived" ? "critical" : "important",
+    priority: "important",
     metadata: {
       kind: "stock_alert",
       variant,

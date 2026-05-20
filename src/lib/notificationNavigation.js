@@ -18,10 +18,13 @@ export function getNotificationOpenAction(notification, locale = "fr") {
   if (type === "new_message" || /message|chat|conversation/.test(blob)) {
     return { kind: "page", page: "dashboard", dashTab: "messages" };
   }
-  if (type === "pack_moderation" || link.includes("dashboard")) {
+  if (type === "pack_moderation" || (link.includes("dashboard") && !link.includes("admin"))) {
     return { kind: "page", page: "dashboard" };
   }
-  if (type === "new_product" || link.includes("/products/") || link.includes("/produit")) {
+  if (type === "new_product" || link.includes("tab=produits") || link.includes("page=admin")) {
+    return { kind: "route", path: ensureLocalePath("/admin?tab=produits", locale) };
+  }
+  if (link.includes("/products/") || link.includes("/produit")) {
     return { kind: "page", page: "produits" };
   }
   if (/commande|order|booking/.test(blob)) {

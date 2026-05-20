@@ -20,6 +20,9 @@ export const NOTIF_PRIORITIES = /** @type {const} */ ({
 });
 
 const TYPE_RULES = [
+  { test: (t) => /new_product|nouveau produit publié/i.test(t || ""), category: NOTIF_CATEGORIES.system, priority: NOTIF_PRIORITIES.standard },
+  { test: (t) => /pack_moderation|pack approuvé|pack refusé|pack à corriger/i.test(t || ""), category: NOTIF_CATEGORIES.business, priority: NOTIF_PRIORITIES.standard },
+  { test: (t) => /stock_alert|rupture de stock|produit en rupture|produit archivé/i.test(t || ""), category: NOTIF_CATEGORIES.business, priority: NOTIF_PRIORITIES.important },
   { test: (t) => /admin|incident|réclamation|reclamation|staff yorix|paiement bloqué/i.test(t || ""), category: NOTIF_CATEGORIES.admin, priority: NOTIF_PRIORITIES.critical },
   { test: (t) => /business|b2b|partenaire|yorix business/i.test(t || ""), category: NOTIF_CATEGORIES.business, priority: NOTIF_PRIORITIES.important },
   { test: (t) => /payment|paiement|checkout|cinetpay|escrow/i.test(t || ""), category: NOTIF_CATEGORIES.payments, priority: NOTIF_PRIORITIES.critical },

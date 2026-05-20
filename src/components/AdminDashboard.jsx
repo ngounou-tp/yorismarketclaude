@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { ROLE_LABELS, CATS } from "../lib/constants";
@@ -30,10 +31,29 @@ import {
 // ─────────────────────────────────────────────────────────────
 export function AdminDashboard({ user, userData, goPage }) {
   const { t } = useTranslation("admin");
+  const location = useLocation();
   const { flat: categoryFlat, tree: categoryTree, loading: catLoading } = useCategoryTaxonomy();
   const [catReload, setCatReload] = useState(0);
   // ═══════════ ÉTATS PRINCIPAUX ═══════════
   const [adminTab, setAdminTab]     = useState("overview");
+
+  const ADMIN_TABS = useMemo(
+    () => [
+      "overview", "deliveries", "livreurs", "categories", "packs", "produits",
+      "commandes", "utilisateurs", "vendeurs", "prestataires", "revenus",
+      "commerce_promo", "loyalty", "messagerie", "notif_center", "alertes",
+    ],
+    [],
+  );
+
+  useEffect(() => {
+    try {
+      const tab = new URLSearchParams(location.search).get("tab");
+      if (tab && ADMIN_TABS.includes(tab)) setAdminTab(tab);
+    } catch {
+      /* ignore */
+    }
+  }, [location.search, ADMIN_TABS]);
   const [loading, setLoading]       = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast]           = useState(null);
@@ -2068,9 +2088,9 @@ export function AdminDashboard({ user, userData, goPage }) {
           <>
             <div className="admin-page-title">📣 Réseau notifications</div>
             <p style={{ color: "var(--gray)", fontSize: ".85rem", marginBottom: 18, maxWidth: 720, lineHeight: 1.65 }}>
-              Agrégats Supabase (fenêtre 7 jours + appareils Web Push). Les envois critiques passent aussi par{" "}
-              <code style={{ fontSize: ".72rem" }}>dispatch_notification</code> → webhook{" "}
-              <code style={{ fontSize: ".72rem" }}>CRITICAL_NOTIFY_WEBHOOK_URL</code> (WhatsApp / email / n8n).
+              Agrégats Supabase (fenêtre 7 jours + appareils Web Push). E-mails Resend uniquement pour messages,
+              commandes, paiements, livraison et sécurité (opt-in utilisateur). Nouveaux produits, stock et packs :
+              notification in-app seulement — pas d&apos;email automatique.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
               <div className="stat-card" style={{ padding: "18px 16px" }}>
