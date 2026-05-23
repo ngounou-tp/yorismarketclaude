@@ -3916,4 +3916,190 @@ textarea:focus-visible {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   YORIX — HEADER MOBILE PREMIUM (≤768px uniquement)
+   Logo · Langue · Catégories · Notifications · Profil + recherche ligne 2
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .header-sticky-stack {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 440 !important;
+    backdrop-filter: blur(14px) saturate(1.15) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.15) !important;
+    background: color-mix(in srgb, var(--surface) 90%, transparent) !important;
+    box-shadow: 0 4px 24px rgba(13, 31, 20, 0.08) !important;
+  }
+
+  .header-sticky-stack--compact {
+    box-shadow: 0 6px 28px rgba(13, 31, 20, 0.12) !important;
+  }
+
+  .navbar.navbar--yorix-mobile {
+    display: grid !important;
+    grid-template-columns: auto auto minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    grid-template-areas:
+      "logo lang cats actions"
+      "search search search search" !important;
+    align-items: center !important;
+    gap: 6px 8px !important;
+    padding: 8px 10px 10px !important;
+    height: auto !important;
+    min-height: 52px !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent) !important;
+  }
+
+  .navbar.navbar--yorix-mobile .logo-wrap {
+    grid-area: logo !important;
+    flex-shrink: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-lang-mobile {
+    grid-area: lang !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+    padding: 4px 6px !important;
+    border-radius: 8px !important;
+    background: var(--surface2) !important;
+    border: 1px solid var(--border) !important;
+    font-size: 0.64rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-lang-mobile span[aria-hidden] {
+    opacity: 0.35 !important;
+    font-size: 0.58rem !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-lang-mobile button {
+    padding: 4px 5px !important;
+    min-height: 28px !important;
+    min-width: 26px !important;
+    border-radius: 6px !important;
+    touch-action: manipulation !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-lang-mobile button.active {
+    background: var(--green-pale) !important;
+    color: var(--green) !important;
+  }
+
+  .navbar.navbar--yorix-mobile .cat-mega-wrap {
+    grid-area: cats !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-search-wrap {
+    grid-area: search !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-actions {
+    grid-area: actions !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 4px !important;
+    margin-left: 0 !important;
+    flex-shrink: 0 !important;
+    min-width: 0 !important;
+  }
+
+  /* Panier dans la bottom nav — libère l'espace header */
+  .navbar.navbar--yorix-mobile .nav-actions > .icon-btn {
+    display: none !important;
+  }
+
+  .navbar.navbar--yorix-mobile .ybell-wrap {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 3 !important;
+  }
+
+  .navbar.navbar--yorix-mobile .user-menu-mobile {
+    flex-shrink: 0 !important;
+  }
+
+  .navbar.navbar--yorix-mobile .user-menu-trigger.umd-trigger {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 50% !important;
+    border: 2px solid var(--green) !important;
+    background: linear-gradient(145deg, var(--green-pale), var(--surface)) !important;
+    box-shadow: 0 2px 10px rgba(26, 107, 58, 0.18) !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    transition: transform 0.12s ease, box-shadow 0.15s ease !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .navbar.navbar--yorix-mobile .user-menu-trigger.umd-trigger:active {
+    transform: scale(0.94) !important;
+    box-shadow: 0 1px 6px rgba(26, 107, 58, 0.22) !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-search {
+    border-radius: 12px !important;
+    min-height: 42px !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-search input {
+    font-size: 16px !important;
+    padding: 10px 12px !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-search button {
+    min-width: 44px !important;
+  }
+
+  /* Empêche le scroll horizontal global sur petits Android */
+  .header-sticky-stack,
+  .navbar.navbar--yorix-mobile,
+  .nav-tabs-row,
+  .pay-strip {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  .nav-tabs-row {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .yorix-emotional-nav {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar.navbar--yorix-mobile .categories-title {
+    max-width: 72px !important;
+  }
+
+  .navbar.navbar--yorix-mobile .logo-txt {
+    font-size: 1.1rem !important;
+  }
+
+  .navbar.navbar--yorix-mobile .nav-lang-mobile {
+    font-size: 0.6rem !important;
+    padding: 3px 5px !important;
+  }
+}
+
 `;

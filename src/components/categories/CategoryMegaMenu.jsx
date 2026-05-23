@@ -27,7 +27,10 @@ export function CategoryMegaMenu({ tree = [], locale = "fr", onNavigate }) {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {locale === "en" ? "Categories" : "Catégories"} ▾
+        <span className="categories-title">{locale === "en" ? "Categories" : "Catégories"}</span>
+        <span className="cat-mega-chevron" aria-hidden>
+          ▾
+        </span>
       </button>
       {open && (
         <div className="cat-mega-panel" role="navigation" aria-label={locale === "en" ? "Categories" : "Catégories"}>

@@ -116,7 +116,7 @@ export function YorixHeader({
         </div>
       </div>
 
-      <nav className="navbar">
+      <nav className="navbar navbar--yorix-mobile">
         <div className="logo-wrap" onClick={() => goPage("home")}>
           <div className="logo-txt">
             Yo<span>rix</span>
