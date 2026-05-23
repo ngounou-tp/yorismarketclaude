@@ -107,6 +107,10 @@ CREATE TRIGGER trg_notify_peer_chat_message
   FOR EACH ROW EXECUTE FUNCTION public.fn_notify_peer_chat_message();
 
 -- ─── 3) Recherche membres pour « Nouveau message » (RLS profiles restreint) ─
+-- DROP obligatoire si la signature OUT (colonnes retournées) a changé
+DROP FUNCTION IF EXISTS public.search_profiles_for_chat(text, int);
+DROP FUNCTION IF EXISTS public.search_profiles_for_chat(text, integer);
+
 CREATE OR REPLACE FUNCTION public.search_profiles_for_chat(
   p_query text,
   p_limit int DEFAULT 8
