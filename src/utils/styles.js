@@ -3033,4 +3033,888 @@ img, video {
    FIN DES FIXES MOBILE V2
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎯 YORIX CM - SPRINT 2 & 3 FIXES
+   Menu burger + FicheProduit + Cart + Dashboards + Checkout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. USER MENU DRAWER ───────────────────────────────────────────────── */
+.umd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.umd-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.umd-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(380px, 100vw);
+  height: 100vh;
+  height: 100dvh;
+  background: var(--surface, #ffffff);
+  z-index: 701;
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+.umd-drawer.open {
+  transform: translateX(0);
+}
+.umd-header {
+  background: linear-gradient(135deg, var(--green, #1a6b3a), #0f4a28);
+  color: #fff;
+  padding: 24px 20px 22px;
+  position: relative;
+  flex-shrink: 0;
+}
+.umd-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+.umd-close:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+.umd-avatar-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+.umd-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #0d1f14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.umd-avatar-guest {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 2rem;
+}
+.umd-role-pill {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  border: 2px solid #fff;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.umd-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin: 8px 0 4px;
+  color: #fff;
+  line-height: 1.2;
+  word-wrap: break-word;
+}
+.umd-email {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0 0 12px;
+  word-break: break-all;
+}
+.umd-cta-login {
+  width: 100%;
+  background: #fbbf24;
+  color: #0d1f14;
+  border: none;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.2s ease;
+}
+.umd-cta-login:hover {
+  background: #f59e0b;
+  transform: translateY(-1px);
+}
+.umd-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border, #e2ddd6);
+  padding: 0;
+  flex-shrink: 0;
+}
+.umd-stat {
+  background: var(--surface, #fff);
+  border: none;
+  padding: 14px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+.umd-stat:hover {
+  background: var(--surface2, #f0ece6);
+}
+.umd-stat-val {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--ink, #0d1f14);
+  line-height: 1;
+}
+.umd-stat-gold .umd-stat-val {
+  color: #f59e0b;
+}
+.umd-stat-lbl {
+  font-size: 0.65rem;
+  color: var(--gray, #6b7a72);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.umd-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.umd-nav::-webkit-scrollbar {
+  width: 4px;
+}
+.umd-nav::-webkit-scrollbar-thumb {
+  background: var(--border, #e2ddd6);
+  border-radius: 2px;
+}
+.umd-section-title {
+  padding: 14px 20px 6px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gray, #6b7a72);
+}
+.umd-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 13px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--ink, #0d1f14);
+  font-weight: 500;
+  transition: background 0.15s ease;
+  min-height: 50px;
+}
+.umd-nav-item:hover {
+  background: var(--surface2, #f0ece6);
+}
+.umd-nav-item:active {
+  background: var(--green-pale, #c8f5d9);
+}
+.umd-nav-icon {
+  font-size: 1.2rem;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.umd-nav-label {
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.umd-nav-arrow {
+  color: var(--gray, #6b7a72);
+  font-size: 1.1rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.umd-nav-meta {
+  font-size: 0.72rem;
+  color: var(--gray, #6b7a72);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.umd-nav-meta-hot {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 2px 8px;
+  border-radius: 50px;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+.umd-badge {
+  background: #fbbf24;
+  color: #0d1f14;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 50px;
+  flex-shrink: 0;
+  min-width: 24px;
+  text-align: center;
+}
+.umd-nav-item-highlight {
+  background: linear-gradient(90deg, var(--green-pale, #c8f5d9), transparent);
+  border-left: 3px solid var(--green, #1a6b3a);
+}
+.umd-nav-item-admin {
+  background: linear-gradient(90deg, #fef3c7, transparent);
+  border-left: 3px solid #92400e;
+  color: #92400e;
+  font-weight: 600;
+}
+.umd-nav-item-wa {
+  background: linear-gradient(90deg, rgba(37, 211, 102, 0.08), transparent);
+  border-left: 3px solid #25D366;
+}
+.umd-nav-item-wa:hover {
+  background: linear-gradient(90deg, rgba(37, 211, 102, 0.14), transparent);
+}
+.umd-nav-item-toggle {
+  cursor: default;
+}
+.umd-nav-item-toggle:hover {
+  background: transparent;
+}
+.umd-toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 50px;
+  background: var(--border, #e2ddd6);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+.umd-toggle-on {
+  background: var(--green, #1a6b3a);
+}
+.umd-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.umd-toggle-on .umd-toggle-knob {
+  transform: translateX(20px);
+}
+.umd-lang-switch {
+  display: flex;
+  background: var(--surface2, #f0ece6);
+  border-radius: 8px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+.umd-lang-switch button {
+  background: transparent;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--gray, #6b7a72);
+  min-height: 32px;
+}
+.umd-lang-switch button.active {
+  background: var(--surface, #fff);
+  color: var(--green, #1a6b3a);
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.umd-cta-become-seller {
+  margin: 16px 16px 8px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #0d1f14;
+  border: none;
+  padding: 13px;
+  border-radius: 12px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  width: calc(100% - 32px);
+  display: block;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+.umd-cta-become-seller:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+}
+.umd-logout {
+  margin: 12px 16px 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  padding: 14px;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+.umd-logout:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+}
+.umd-logout:active {
+  transform: translateY(0);
+}
+.umd-footer {
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border, #e2ddd6);
+  background: var(--surface2, #f0ece6);
+  flex-shrink: 0;
+  text-align: center;
+}
+.umd-footer-text {
+  font-size: 0.74rem;
+  color: var(--gray, #6b7a72);
+  margin: 0 0 3px;
+}
+.umd-footer-text strong {
+  color: var(--green, #1a6b3a);
+}
+.umd-footer-version {
+  font-size: 0.62rem;
+  color: var(--gray, #6b7a72);
+  opacity: 0.6;
+  margin: 0;
+}
+.umd-trigger {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surface2, #f0ece6);
+  border: 1px solid var(--border, #e2ddd6);
+  color: var(--ink, #0d1f14);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.umd-trigger:hover {
+  border-color: var(--green, #1a6b3a);
+  background: var(--green-pale, #c8f5d9);
+}
+
+/* ─── 2. FICHE PRODUIT mobile ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .fiche-produit-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .img-main {
+    width: 100% !important;
+    height: 280px !important;
+    object-fit: cover !important;
+    border-radius: 12px !important;
+  }
+  .img-gallery {
+    gap: 6px !important;
+    padding: 8px 0 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .img-gallery::-webkit-scrollbar {
+    display: none !important;
+  }
+  .img-gallery-thumb {
+    width: 64px !important;
+    height: 64px !important;
+    flex-shrink: 0 !important;
+  }
+  .fp-title,
+  .product-title {
+    font-size: 1.3rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 8px !important;
+  }
+  .fp-price,
+  .product-price {
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+    color: var(--green, #1a6b3a) !important;
+    margin-bottom: 12px !important;
+  }
+  .fp-add-cart,
+  .product-add-cart {
+    position: sticky !important;
+    bottom: 80px !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    padding: 14px !important;
+    font-size: 0.95rem !important;
+    min-height: 52px !important;
+    background: var(--green, #1a6b3a) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 16px rgba(26, 107, 58, 0.3) !important;
+  }
+  .fp-description {
+    font-size: 0.88rem !important;
+    line-height: 1.7 !important;
+    color: var(--gray, #6b7a72) !important;
+  }
+}
+
+/* ─── 3. CART DRAWER mobile ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .cart-header {
+    padding: 14px 16px !important;
+  }
+  .cart-header-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .cart-title {
+    font-size: 0.95rem !important;
+  }
+  .cart-subtitle {
+    font-size: 0.66rem !important;
+  }
+  .cart-trust-bar {
+    padding: 7px 12px !important;
+    font-size: 0.66rem !important;
+    gap: 6px !important;
+  }
+  .cart-item {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+  .ci-img {
+    width: 64px !important;
+    height: 64px !important;
+  }
+  .ci-name {
+    font-size: 0.82rem !important;
+    -webkit-line-clamp: 2 !important;
+    padding-right: 24px !important;
+  }
+  .ci-vendeur {
+    font-size: 0.66rem !important;
+  }
+  .ci-total-price {
+    font-size: 0.95rem !important;
+  }
+  .ci-unit-price {
+    font-size: 0.6rem !important;
+  }
+  .qty-btn {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 1rem !important;
+  }
+  .qty-val {
+    font-size: 0.85rem !important;
+  }
+  .ci-del {
+    width: 28px !important;
+    height: 28px !important;
+    top: 8px !important;
+    right: 8px !important;
+  }
+  .cart-footer {
+    padding: 12px 16px !important;
+    max-height: 60vh !important;
+  }
+  .cart-total-row {
+    font-size: 0.85rem !important;
+    padding: 5px 0 !important;
+  }
+  .cart-total-row.grand {
+    font-size: 1.1rem !important;
+  }
+  .cart-total-row.grand strong {
+    font-size: 1.2rem !important;
+  }
+  .cart-pay-btn {
+    padding: 12px 8px !important;
+    min-height: 64px !important;
+  }
+  .cart-pay-icon {
+    font-size: 1.4rem !important;
+  }
+  .cart-pay-label {
+    font-size: 0.72rem !important;
+  }
+  .cart-wa-confirm {
+    padding: 14px !important;
+    font-size: 0.92rem !important;
+    min-height: 52px !important;
+    border-radius: 12px !important;
+  }
+  .cart-empty {
+    padding: 40px 24px !important;
+  }
+  .cart-empty-icon {
+    font-size: 4rem !important;
+  }
+  .cart-empty-title {
+    font-size: 1.05rem !important;
+  }
+  .cart-empty-sub {
+    font-size: 0.82rem !important;
+  }
+  .cart-empty-btn {
+    padding: 13px 28px !important;
+    font-size: 0.88rem !important;
+    min-height: 48px !important;
+  }
+}
+
+/* ─── 4. DASHBOARD mobile ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-layout-inner,
+  .dash-layout {
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 0 !important;
+  }
+  .admin-sidebar,
+  .dash-sidebar {
+    position: sticky !important;
+    top: 56px !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding: 10px !important;
+    gap: 6px !important;
+    background: var(--surface, #fff) !important;
+    border-bottom: 1px solid var(--border, #e2ddd6) !important;
+    z-index: 200 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  .admin-sidebar::-webkit-scrollbar,
+  .dash-sidebar::-webkit-scrollbar {
+    display: none !important;
+  }
+  .admin-sidebar-logo,
+  .dash-avatar,
+  .dash-name,
+  .dash-role-badge {
+    display: none !important;
+  }
+  .admin-nav-item,
+  .dash-nav-item {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    border-left: none !important;
+    border-bottom: 3px solid transparent !important;
+    padding: 8px 14px !important;
+    font-size: 0.78rem !important;
+    min-height: 44px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  .admin-nav-item.active,
+  .dash-nav-item.active {
+    border-left: none !important;
+    border-bottom-color: var(--green, #1a6b3a) !important;
+    background: var(--green-pale, #c8f5d9) !important;
+  }
+  .admin-content,
+  .dash-content {
+    padding: 16px 12px calc(80px + env(safe-area-inset-bottom)) !important;
+    min-width: 0 !important;
+  }
+  .admin-page-title,
+  .dash-page-title {
+    font-size: 1.15rem !important;
+    margin-bottom: 14px !important;
+    flex-wrap: wrap !important;
+  }
+  .stat-cards-grid,
+  .dash-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+  .stat-card,
+  .dstat {
+    padding: 12px !important;
+    border-radius: 10px !important;
+  }
+  .stat-card-icon,
+  .dstat-icon {
+    font-size: 1.1rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin-bottom: 6px !important;
+  }
+  .stat-card-val,
+  .dstat-val {
+    font-size: 1.1rem !important;
+  }
+  .stat-card-lbl,
+  .dstat-lbl {
+    font-size: 0.65rem !important;
+  }
+  .admin-table-wrap,
+  .admin-table {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .admin-table {
+    min-width: 600px !important;
+    font-size: 0.72rem !important;
+  }
+  .admin-table th,
+  .admin-table td {
+    padding: 8px 10px !important;
+  }
+  .admin-action-btn {
+    padding: 6px 10px !important;
+    font-size: 0.65rem !important;
+    min-height: 36px !important;
+  }
+  .admin-search {
+    width: 100% !important;
+    max-width: none !important;
+    font-size: 16px !important;
+    padding: 10px 12px !important;
+  }
+  .admin-filter-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .admin-section {
+    padding: 14px !important;
+    margin-bottom: 14px !important;
+  }
+  .admin-section-title {
+    font-size: 0.85rem !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .chart-bar-wrap {
+    height: 60px !important;
+  }
+}
+
+/* ─── 5. CHECKOUT mobile ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .checkout-page-wrap {
+    padding: 0 12px !important;
+  }
+  .checkout-progress {
+    padding: 10px 8px 12px !important;
+    margin-bottom: 14px !important;
+    border-radius: 12px !important;
+  }
+  .checkout-progress-node {
+    width: min(22vw, 78px) !important;
+    padding: 4px 2px !important;
+  }
+  .checkout-progress-node-inner {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.9rem !important;
+  }
+  .checkout-progress-label {
+    font-size: 0.6rem !important;
+    line-height: 1.15 !important;
+  }
+  .checkout-progress-lead {
+    height: 2px !important;
+    margin-right: 4px !important;
+  }
+  .card.checkout-form-card {
+    padding: 16px !important;
+    border-radius: 12px !important;
+    margin-bottom: 14px !important;
+  }
+  .checkout-step-heading {
+    font-size: 0.95rem !important;
+    margin-bottom: 8px !important;
+  }
+  .checkout-step-lead {
+    font-size: 0.78rem !important;
+    margin-bottom: 12px !important;
+  }
+  .checkout-step-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .checkout-field {
+    gap: 4px !important;
+  }
+  .checkout-field input,
+  .checkout-field select,
+  .checkout-field textarea {
+    font-size: 16px !important;
+    padding: 12px !important;
+    min-height: 48px !important;
+    border-radius: 10px !important;
+    border: 1.5px solid var(--border, #e2ddd6) !important;
+  }
+  .checkout-field input:focus,
+  .checkout-field select:focus,
+  .checkout-field textarea:focus {
+    border-color: var(--green, #1a6b3a) !important;
+    box-shadow: 0 0 0 3px rgba(26, 107, 58, 0.15) !important;
+  }
+  .checkout-trust-row {
+    flex-direction: column !important;
+    gap: 6px !important;
+    align-items: stretch !important;
+  }
+  .checkout-trust-row span {
+    text-align: center !important;
+    padding: 8px 12px !important;
+    font-size: 0.74rem !important;
+  }
+  .checkout-estimate-box {
+    padding: 12px !important;
+    border-radius: 10px !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 50 !important;
+    background: var(--surface, #fff) !important;
+    margin: 0 -12px !important;
+    border-bottom: none !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
+  }
+  .checkout-pay-recap {
+    font-size: 0.84rem !important;
+  }
+  .checkout-pay-recap-total {
+    font-size: 1rem !important;
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+  }
+  .checkout-submit-btn,
+  .checkout-cta {
+    width: 100% !important;
+    padding: 14px !important;
+    font-size: 0.95rem !important;
+    min-height: 52px !important;
+    border-radius: 12px !important;
+    background: var(--green, #1a6b3a) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: 0 4px 16px rgba(26, 107, 58, 0.3) !important;
+    margin-top: 12px !important;
+  }
+}
+
+/* ─── 6. GLOBAL UI ────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth !important;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(26, 107, 58, 0.4) !important;
+  outline-offset: 2px !important;
+}
+@keyframes umd-skeleton {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.umd-skeleton {
+  background: linear-gradient(90deg,
+    var(--surface2, #f0ece6) 25%,
+    var(--surface, #fff) 50%,
+    var(--surface2, #f0ece6) 75%
+  );
+  background-size: 200% 100%;
+  animation: umd-skeleton 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+.toast,
+[class*="toast"] {
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
 `;

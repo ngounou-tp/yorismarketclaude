@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { roleLabel } from "../../i18n/index.js";
 import { EMOTIONAL_NAV } from "../../lib/merchHubs";
@@ -31,6 +30,7 @@ export function YorixHeader({
   onMarkNotifRead,
   totalQty,
   openCart,
+  onOpenUserMenu,
   setAuthTab,
   setAuthOpen,
   setSelectedRole,
@@ -46,19 +46,6 @@ export function YorixHeader({
   const { t } = useTranslation("nav");
   const localeTag = siteLocale === "en" ? "en-FR" : "fr-FR";
   const freeShip = commerceDeliveryPolicy.freeShippingThresholdXaf.toLocaleString(localeTag);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef(null);
-
-  useEffect(() => {
-    if (!userMenuOpen) return undefined;
-    const close = (e) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [userMenuOpen]);
 
   return (
     <div className={`header-sticky-stack${navCompact ? " header-sticky-stack--compact" : ""}`}>
@@ -265,67 +252,15 @@ export function YorixHeader({
             {totalQty > 0 && <span className="ibadge">{totalQty}</span>}
           </button>
 
-          <div className="user-menu-mobile" ref={userMenuRef}>
+          <div className="user-menu-mobile">
             <button
               type="button"
-              className="user-menu-trigger"
-              aria-expanded={userMenuOpen}
+              className="user-menu-trigger umd-trigger"
               aria-label={user ? t("actions.mySpace") : t("topbar.login")}
-              onClick={() => setUserMenuOpen((o) => !o)}
+              onClick={onOpenUserMenu}
             >
               {user ? (userData?.nom || user.email || "?")[0].toUpperCase() : "☰"}
             </button>
-            {userMenuOpen && (
-              <div className="user-menu-dropdown">
-                {user ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        goPage("dashboard");
-                      }}
-                    >
-                      📊 {t("actions.mySpace")}
-                    </button>
-                    <button
-                      type="button"
-                      className="logout-btn"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        doLogout();
-                      }}
-                    >
-                      🚪 {t("actions.logout")}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        setAuthTab("login");
-                        setAuthOpen(true);
-                      }}
-                    >
-                      🔑 Connexion
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        setAuthTab("register");
-                        setSelectedRole("buyer");
-                        setAuthOpen(true);
-                      }}
-                    >
-                      🚀 {t("actions.register")}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
           </div>
 
           <div className="nav-auth-desktop">

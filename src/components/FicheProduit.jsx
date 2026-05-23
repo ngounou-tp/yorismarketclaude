@@ -123,7 +123,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
           {/* COLONNE GAUCHE : IMAGES */}
           {images.length > 0 ? (
             <div style={{ marginBottom: 16 }}>
-              <div style={{
+            <div className="fiche-produit-hero-img" style={{
                 background: "var(--surface2)",
                 borderRadius: 12, overflow: "hidden",
                 marginBottom: 12, minHeight: 300,
@@ -135,6 +135,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
                   priority={true}
                   fallbackEmoji="📦"
                   objectFit="contain"
+                  className="img-main"
                   style={{
                     width: "100%", height: "auto",
                     minHeight: 300, maxHeight: 500,
@@ -185,7 +186,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
           {/* COLONNE DROITE : INFOS */}
           <div>
             <TrustStrip compact />
-            <div className="modal-title">{product.name_fr}</div>
+            <div className="modal-title fp-title">{product.name_fr}</div>
             <SocialProofLine product={product} locale={siteLocale} />
             <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "6px 0 10px", flexWrap: "wrap" }}>
               <Stars value={Math.round(avgNote)} />
@@ -197,7 +198,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
             </div>
 
             {product.description_fr && (
-              <p style={{ fontSize: ".82rem", color: "var(--gray)", lineHeight: 1.75, marginBottom: 12 }}>
+              <p className="fp-description" style={{ fontSize: ".82rem", color: "var(--gray)", lineHeight: 1.75, marginBottom: 12 }}>
                 {product.description_fr}
               </p>
             )}
@@ -214,7 +215,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
               </div>
             )}
 
-            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.5rem", fontWeight: 800, color: "var(--green)", marginBottom: 14 }}>
+            <div className="fp-price product-price" style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.5rem", fontWeight: 800, color: "var(--green)", marginBottom: 14 }}>
               {isPromoActive(product) ? (
                 <>
                   {effectiveProductPrice(product).toLocaleString()}{" "}
@@ -261,6 +262,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
                 <button
                   disabled={!buyable}
                   aria-disabled={!buyable}
+                  className="fp-add-cart product-add-cart"
                   onClick={() => { if (buyable) { onAddToCart(product); onClose(); } }}
                   style={{
                     background: buyable ? "var(--green)" : "var(--surface2)",

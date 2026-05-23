@@ -76,6 +76,7 @@ import { LevelBadge } from "./components/LevelBadge";
 import { PointsAnimation } from "./components/PointsAnimation";
 import { ModalDemandeLivraison } from "./components/ModalDemandeLivraison";
 import { CartDrawer } from "./components/CartDrawer";
+import { UserMenuDrawer } from "./components/UserMenuDrawer";
 import { getDefaultPolicyFromEnv, normalizeDeliveryPolicy } from "./domain/deliveryPolicy";
 import { enrichNotification, showBrowserNotificationIfPossible } from "./domain/notificationsDomain";
 import { applyNotificationOpen, getNotificationOpenAction } from "./lib/notificationNavigation.js";
@@ -132,6 +133,8 @@ export default function YorixApp() {
   const [dashTab, setDashTab] = useState("overview");
   const [demandeLivraisonOpen, setDemandeLivraisonOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
 
   const [dark, setDark]           = useState(false);
 
@@ -258,8 +261,17 @@ export default function YorixApp() {
 
   const closeCartDrawer = useCallback(() => setCartDrawerOpen(false), []);
 
+  const goDash = useCallback(
+    (tab) => {
+      setDashTab(tab);
+      goPage("dashboard");
+    },
+    [goPage],
+  );
+
   useEffect(() => {
     setCartDrawerOpen(false);
+    setUserMenuOpen(false);
   }, [location.pathname]);
 
   const goToCategory = useCallback(
@@ -325,6 +337,24 @@ export default function YorixApp() {
     cartSummary,
     totalQty,
   } = useYorixCart(commerceDeliveryPolicy);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setOrderCount(0);
+      return undefined;
+    }
+    let cancelled = false;
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", user.id)
+      .then(({ count, error }) => {
+        if (!cancelled && !error) setOrderCount(count || 0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -1696,6 +1726,7 @@ export default function YorixApp() {
         onMarkNotifRead={marquerNotifLue}
         totalQty={totalQty}
         openCart={openCart}
+        onOpenUserMenu={() => setUserMenuOpen(true)}
         setAuthTab={setAuthTab}
         setAuthOpen={setAuthOpen}
         setSelectedRole={setSelectedRole}
@@ -1722,6 +1753,29 @@ export default function YorixApp() {
         removeItem={removeItem}
         goPage={goPage}
         totalQty={totalQty}
+      />
+
+      <UserMenuDrawer
+        open={userMenuOpen}
+        onClose={() => setUserMenuOpen(false)}
+        user={user}
+        userData={userData}
+        userRole={userRole}
+        orderCount={orderCount}
+        loyaltyPoints={userData?.points ?? loyaltyPts}
+        wishlistCount={wishlist.size}
+        dark={dark}
+        onToggleDark={() => setDark((d) => !d)}
+        siteLocale={route.locale}
+        onChangeLocale={switchLocale}
+        onLogout={doLogout}
+        goPage={goPage}
+        goDash={goDash}
+        onOpenAuth={() => {
+          setAuthTab("login");
+          setAuthOpen(true);
+        }}
+        setOnboardingOpen={setOnboardingOpen}
       />
 
       <PremiumSiteFooter goPage={goPage} freeShippingThresholdXaf={commerceDeliveryPolicy.freeShippingThresholdXaf} />
