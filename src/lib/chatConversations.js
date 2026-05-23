@@ -3,6 +3,32 @@
  */
 
 /**
+ * Normalise une ligne RPC ou legacy vers un profil affichable.
+ * @param {Record<string, unknown>|null|undefined} row
+ */
+export function normalizeChatSearchProfile(row) {
+  if (!row?.id) return null;
+  const fullName = String(row.full_name || row.nom || "Membre Yorix").trim();
+  const emailUser = typeof row.email === "string" ? row.email.split("@")[0] : "";
+  const username = String(
+    row.username || row.nom || emailUser || fullName,
+  )
+    .trim()
+    .replace(/\s+/g, "")
+    .toLowerCase() || "membre";
+
+  return {
+    id: row.id,
+    username,
+    full_name: fullName,
+    nom: fullName,
+    avatar_url: row.avatar_url || null,
+    role: row.role || "buyer",
+    ville: row.ville || null,
+  };
+}
+
+/**
  * @param {import("@supabase/supabase-js").SupabaseClient} supabase
  * @param {string} userId
  * @param {string} targetUserId
@@ -41,22 +67,33 @@ export async function findOrCreateConversation(supabase, userId, targetUserId, p
 }
 
 /**
- * Recherche par nom / début d'e-mail (min. 2 caractères).
+ * Recherche live par nom / pseudo e-mail (min. 2 caractères).
  * @param {import("@supabase/supabase-js").SupabaseClient} supabase
  * @param {string} query
  * @param {number} [limit]
  */
-export async function searchUsersForChat(supabase, query, limit = 8) {
+export async function searchUsersForChat(supabase, query, limit = 10) {
   const q = String(query || "").trim();
   if (q.length < 2) return [];
 
   const { data, error } = await supabase.rpc("search_profiles_for_chat", {
     p_query: q,
-    p_limit: limit,
+    p_limit: Number(limit) || 10,
   });
 
-  if (error) throw error;
-  return data || [];
+  if (error) {
+    const msg = error.message || "";
+    if (/could not find the function|PGRST202|schema cache/i.test(msg)) {
+      throw new Error(
+        "Recherche indisponible — exécutez la migration SQL search_profiles_for_chat sur Supabase, puis rechargez l'API.",
+      );
+    }
+    throw error;
+  }
+
+  return (data || [])
+    .map(normalizeChatSearchProfile)
+    .filter(Boolean);
 }
 
 /** Libellé rôle pour l'autocomplete */

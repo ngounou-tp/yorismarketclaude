@@ -8,7 +8,7 @@ import { findOrCreateConversation } from "../lib/chatConversations";
 import { canWriteAdmin } from "../lib/roles";
 import { CHAT_CONVERSATIONS_LIMIT, CHAT_MESSAGES_LIMIT } from "../lib/queryLimits";
 import { ChatMessageBody } from "./ChatMessageBody";
-import { NewMessagePanel } from "./chat/NewMessagePanel";
+import { NewMessageModal } from "./chat/NewMessageModal";
 import { YorixToast, useYorixToast } from "./ui/YorixToast";
 
 export const YORIX_TEAM_CHANNEL = "__yorix_team__";
@@ -438,7 +438,17 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
   const hubClass = `msg-hub${isModal ? " msg-hub--modal" : ""}${mobileShowThread ? " msg-hub--thread-open" : ""}`;
 
   const handleNewMessagePick = (profile) => {
-    if (profile?.id) startConversation(profile.id, null);
+    if (!profile?.id) return;
+    setProfiles((prev) => ({
+      ...prev,
+      [profile.id]: {
+        id: profile.id,
+        nom: profile.full_name || profile.nom,
+        role: profile.role,
+        ville: profile.ville,
+      },
+    }));
+    startConversation(profile.id, null);
   };
 
   return (
@@ -457,14 +467,6 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
               + Nouveau
             </button>
           </div>
-          {showNewMessage ? (
-            <NewMessagePanel
-              supabase={supabase}
-              userId={user.id}
-              onSelect={handleNewMessagePick}
-              onClose={() => setShowNewMessage(false)}
-            />
-          ) : (
           <input
             type="search"
             className="msg-hub-search"
@@ -473,7 +475,6 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Rechercher"
           />
-          )}
         </div>
 
         <div className="msg-hub-conv-list">
@@ -722,6 +723,14 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
           </footer>
         )}
       </section>
+
+      <NewMessageModal
+        open={showNewMessage}
+        supabase={supabase}
+        userId={user.id}
+        onSelect={handleNewMessagePick}
+        onClose={() => setShowNewMessage(false)}
+      />
     </div>
   );
 }
