@@ -1,4 +1,5 @@
 import { maskPIIForDisplay } from "../lib/chatSecurity";
+import { sanitizeChatDisplayText } from "../lib/chatMessages";
 
 const URL_RE = /(https?:\/\/[^\s<]+[^\s<.,;:!?)}\]'"])/gi;
 
@@ -16,7 +17,9 @@ function safeHref(url) {
  * Corps de message : texte masqué, liens cliquables, image.
  */
 export function ChatMessageBody({ content, imageUrl, linkUrl, revealPII = false }) {
-  const text = maskPIIForDisplay(content || "", { reveal: revealPII });
+  let raw = content || "";
+  if (imageUrl) raw = sanitizeChatDisplayText(raw);
+  const text = maskPIIForDisplay(raw, { reveal: revealPII });
 
   const parts = [];
   if (text) {

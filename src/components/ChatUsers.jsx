@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { uploadSingleImage } from "../utils/helpers";
 import { filtrerMsg, publicDisplayName, adminContactLines } from "../lib/chatSecurity";
+import { insertChatMessage } from "../lib/chatMessages";
 import { canWriteAdmin } from "../lib/roles";
 import { CHAT_CONVERSATIONS_LIMIT, CHAT_MESSAGES_LIMIT } from "../lib/queryLimits";
 import { ChatMessageBody } from "./ChatMessageBody";
@@ -48,8 +49,22 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
   const [blockReason, setBlockReason] = useState("");
   const [search, setSearch] = useState("");
   const [mobileShowThread, setMobileShowThread] = useState(false);
+  const [feedback, setFeedback] = useState(null);
   const messagesEndRef = useRef(null);
   const fileRef = useRef(null);
+
+  const showFeedback = useCallback((msg, type = "error") => {
+    setFeedback({ msg, type });
+    setTimeout(() => setFeedback(null), 4500);
+  }, []);
+
+  const hapticTap = () => {
+    try {
+      navigator.vibrate?.(8);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const startConversation = useCallback(async (targetUserId, productId = null) => {
     if (!user?.id || !targetUserId || user.id === targetUserId) return;
@@ -79,9 +94,9 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       await loadConversations();
     } catch (err) {
       console.error("startConversation:", err);
-      alert("Erreur : " + err.message);
+      showFeedback("Erreur : " + err.message);
     }
-  }, [user?.id]);
+  }, [user?.id, showFeedback]);
 
   useEffect(() => {
     if (initialProduct?.vendeur_id && user?.id && initialProduct.vendeur_id !== user.id) {
@@ -288,14 +303,14 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image max 5 Mo");
+      showFeedback("Image max 5 Mo");
       return;
     }
     setUploading(true);
     try {
       setPendingImage(await uploadSingleImage(file));
     } catch (err) {
-      alert(err.message || "Échec upload");
+      showFeedback(err.message || "Échec upload");
     }
     setUploading(false);
     e.target.value = "";
@@ -306,6 +321,11 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     const hasImage = Boolean(pendingImage);
     const link = safeHttpsUrl(pendingLink);
     if ((!text && !hasImage && !link) || !activeId || activeId === YORIX_TEAM_CHANNEL || sending) return;
+
+    if (!user?.id) {
+      showFeedback("Session expirée — reconnectez-vous.");
+      return;
+    }
 
     if (text) {
       const filtre = filtrerMsg(text);
@@ -332,27 +352,30 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     }
 
     setSending(true);
+    setFeedback(null);
     try {
-      const payload = {
-        conversation_id: activeId,
-        sender_id: user.id,
-        content: text || (hasImage ? "📷 Photo" : link ? "🔗 Lien" : ""),
-        image_url: pendingImage || null,
-        link_url: link,
-      };
-      const { data, error } = await supabase.from("messages").insert(payload).select().single();
-      if (error) throw error;
+      const data = await insertChatMessage(supabase, {
+        conversationId: activeId,
+        senderId: user.id,
+        content: text,
+        imageUrl: pendingImage || null,
+        linkUrl: link,
+      });
       setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data]));
       setMessageInput("");
       setPendingImage("");
       setPendingLink("");
+      hapticTap();
       await supabase
         .from("conversations")
         .update({ last_message_at: new Date().toISOString() })
         .eq("id", activeId);
       loadConversations();
     } catch (err) {
-      alert("Erreur envoi : " + err.message);
+      console.warn("sendMessage:", err.message);
+      showFeedback(err.message?.includes("expediteur_id")
+        ? "Erreur serveur chat — relancez l’app après mise à jour."
+        : `Message non envoyé : ${err.message || "erreur réseau"}`);
     }
     setSending(false);
   };
@@ -554,6 +577,11 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
               <p className="msg-blocked-hint">Utilisez la messagerie Yorix pour vos échanges commerciaux.</p>
             </div>
           )}
+          {feedback && (
+            <div className={`msg-feedback msg-feedback--${feedback.type}`} role="alert">
+              {feedback.msg}
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -562,15 +590,19 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
             {(pendingImage || pendingLink) && (
               <div className="msg-composer-attachments">
                 {pendingImage && (
-                  <span className="msg-attach-chip">
-                    📷 Photo prête
-                    <button type="button" onClick={() => setPendingImage("")}>×</button>
-                  </span>
+                  <div className="msg-composer-preview">
+                    <img src={pendingImage} alt="Aperçu" loading="lazy" />
+                    <button type="button" className="msg-composer-preview-remove" onClick={() => setPendingImage("")} aria-label="Retirer l'image">
+                      ×
+                    </button>
+                  </div>
                 )}
                 {pendingLink && (
                   <span className="msg-attach-chip">
                     🔗 {pendingLink.slice(0, 40)}
-                    <button type="button" onClick={() => setPendingLink("")}>×</button>
+                    <button type="button" onClick={() => setPendingLink("")} aria-label="Retirer le lien">
+                      ×
+                    </button>
                   </span>
                 )}
               </div>

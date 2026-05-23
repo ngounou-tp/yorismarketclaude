@@ -826,7 +826,7 @@ export default function YorixApp() {
       if (user) await supabase.from("fraud_logs").insert({ type:"tentative_contournement", user_id:user.id, message:chatMsg }).catch(e => console.warn(e?.message));
       setChatMsg(""); return;
     }
-    if (user) await supabase.from("messages").insert({ expediteur_id:user.id, destinataire_id:"support", texte:chatMsg, conversation_id:`${user.id}_support`, lu:false }).catch(e => console.warn(e?.message));
+    // Widget support local (pas d'insert messages — schéma peer sender_id + conversation uuid)
     setChatMessages(prev => [...prev, { text:chatMsg, me:true, time }]);
     setChatMsg("");
     setTimeout(() => setChatMessages(prev => [...prev, { text:"Merci ! Un conseiller Yorix vous répond dans quelques minutes. ⚡", me:false, time }]), 1200);
