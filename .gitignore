@@ -2,6 +2,30 @@ node_modules
 dist
 /.git-commit-msg.txt
 
+# Flutter / mobile
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/**/Generated.xcconfig
+mobile/**/flutter_export_environment.sh
+mobile/**/Pods/
+mobile/**/.symlinks/
+mobile/**/ephemeral/
+mobile/**/xcuserdata/
+mobile/**/*.iml
+mobile/.idea/
+mobile/android/.gradle/
+mobile/.env
+mobile/.env.local
+
+mobile/android/**/captures/
+mobile/android/**/key.properties
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/.generated/
+
 # Secrets & env local (ne jamais committer les clés VAPID privées)
 .env
 .env.local
