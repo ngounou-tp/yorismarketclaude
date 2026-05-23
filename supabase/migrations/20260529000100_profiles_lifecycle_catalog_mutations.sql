@@ -1,13 +1,16 @@
 -- Profiles lifecycle (soft ban / hard delete) + catalog delete RPC
 -- Migration 100 % vers profiles (legacy public.users → backfill puis révocation)
 
--- ─── Colonnes lifecycle sur profiles ───────────────────────────────────────
+-- ─── Colonnes lifecycle + champs profil (si absents en prod) ───────────────
 ALTER TABLE IF EXISTS public.profiles
   ADD COLUMN IF NOT EXISTS deactivated_at timestamptz NULL,
   ADD COLUMN IF NOT EXISTS deleted_at timestamptz NULL,
   ADD COLUMN IF NOT EXISTS email_original text NULL,
   ADD COLUMN IF NOT EXISTS ban_reason text NULL,
-  ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS ville text NULL,
+  ADD COLUMN IF NOT EXISTS adresse text NULL,
+  ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS idx_profiles_deleted_at
   ON public.profiles (deleted_at)
