@@ -6,7 +6,7 @@ DO $$
 DECLARE
   v_sql text;
   v_ins_cols text := 'id';
-  v_sel_cols text := 'u.uid';
+  v_sel_cols text := 'u.uid::uuid';
   v_upd_sets text := '';
   v_map record;
   v_users_has boolean;
