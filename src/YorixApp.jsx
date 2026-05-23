@@ -175,6 +175,7 @@ export default function YorixApp() {
 
   // Notifs
   const [notifs, setNotifs]       = useState([]);
+  const [notifRevision, setNotifRevision] = useState(0);
   const [notifPrefs, setNotifPrefs] = useState(() => loadNotificationPrefs());
   const notifPrefsRef = useRef(notifPrefs);
   notifPrefsRef.current = notifPrefs;
@@ -244,6 +245,7 @@ export default function YorixApp() {
       .limit(limit);
     if (error) console.warn("Notifications:", error.message);
     else setNotifs(data || []);
+    setNotifRevision((v) => v + 1);
   }, []);
 
   const goPage = useCallback((p, opts = {}) => {
@@ -580,11 +582,41 @@ export default function YorixApp() {
             if (prev.some((x) => x.id === row.id)) return prev;
             return [row, ...prev].slice(0, 120);
           });
+          setNotifRevision((v) => v + 1);
           try {
             showBrowserNotificationIfPossible(enrichNotification(row), notifPrefsRef.current);
           } catch {
             /* ignore */
           }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const row = payload.new;
+          setNotifs((prev) => prev.map((n) => (n.id === row.id ? row : n)));
+          setNotifRevision((v) => v + 1);
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const id = payload.old?.id;
+          if (!id) return;
+          setNotifs((prev) => prev.filter((n) => n.id !== id));
+          setNotifRevision((v) => v + 1);
         },
       )
       .subscribe();
@@ -823,6 +855,7 @@ export default function YorixApp() {
     }
 
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, lu: true } : n)));
+    setNotifRevision((v) => v + 1);
 
     if (opts.navigate && notification) {
       openNotificationTarget(notification);
@@ -838,20 +871,25 @@ export default function YorixApp() {
       console.warn("supprimerNotif:", e?.message);
     }
     setNotifs((prev) => prev.filter((n) => n.id !== id));
+    setNotifRevision((v) => v + 1);
   };
 
   const marquerToutesLues = async () => {
-    const ids = notifs.filter(n => !n.lu).map(n => n.id);
-    if (ids.length === 0) return;
+    if (!user?.id) return;
 
     try {
-      const { error } = await supabase.from("notifications").update({ lu: true }).in("id", ids);
+      const { error } = await supabase
+        .from("notifications")
+        .update({ lu: true })
+        .eq("user_id", user.id)
+        .eq("lu", false);
       if (error) console.warn("marquerToutesLues:", error.message);
     } catch (e) {
       console.warn("marquerToutesLues exception:", e?.message);
     }
 
-    setNotifs(prev => prev.map(n => ({ ...n, lu: true })));
+    setNotifs((prev) => prev.map((n) => ({ ...n, lu: true })));
+    setNotifRevision((v) => v + 1);
   };
 
   const unread = notifs.filter(n => !n.lu).length;
@@ -1722,6 +1760,8 @@ export default function YorixApp() {
         produits={produits}
         setOnboardingOpen={setOnboardingOpen}
         onNotifsSync={() => user?.id && loadNotifsForUser(user.id)}
+        notifRevision={notifRevision}
+        unreadNotifs={unread}
         onOpenNotification={openNotificationTarget}
         onMarkNotifRead={marquerNotifLue}
         totalQty={totalQty}

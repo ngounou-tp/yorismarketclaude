@@ -742,7 +742,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);tran
 .notif-preferences-title{font-weight:800;font-family:'Syne',sans-serif;font-size:.74rem;color:var(--ink);}
 .notif-toggle{display:flex;align-items:center;gap:8px;font-size:.71rem;color:var(--gray);cursor:pointer;font-weight:600;}
 .notif-policy-hint{margin:4px 0 0;font-size:.65rem;line-height:1.45;color:var(--gray);font-weight:500;}
-.notif-page-wrap{padding-bottom:48px;}
 
 /* MESSAGERIE — hub aligné notifications */
 .msg-hub{display:flex;height:min(72vh,640px);min-height:420px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(26,107,58,.06);}

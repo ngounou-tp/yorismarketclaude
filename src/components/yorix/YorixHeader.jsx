@@ -28,6 +28,8 @@ export function YorixHeader({
   onNotifsSync,
   onOpenNotification,
   onMarkNotifRead,
+  notifRevision = 0,
+  unreadNotifs = 0,
   totalQty,
   openCart,
   onOpenUserMenu,
@@ -244,6 +246,8 @@ export function YorixHeader({
               onSync={onNotifsSync}
               onOpenNotification={onOpenNotification}
               onMarkNotifRead={onMarkNotifRead}
+              notifRevision={notifRevision}
+              unreadNotifs={unreadNotifs}
             />
           )}
 

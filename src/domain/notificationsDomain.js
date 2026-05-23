@@ -9,6 +9,7 @@ export const NOTIF_CATEGORIES = /** @type {const} */ ({
   system: "system",
   business: "business",
   admin: "admin",
+  catalog: "catalog",
 });
 
 /** Niveaux de priorité affichage (stockage + alias métier). */
@@ -20,7 +21,7 @@ export const NOTIF_PRIORITIES = /** @type {const} */ ({
 });
 
 const TYPE_RULES = [
-  { test: (t) => /new_product|nouveau produit publié/i.test(t || ""), category: NOTIF_CATEGORIES.system, priority: NOTIF_PRIORITIES.standard },
+  { test: (t) => /new_product|nouveau produit publié|catalog/i.test(t || ""), category: NOTIF_CATEGORIES.catalog, priority: NOTIF_PRIORITIES.standard },
   { test: (t) => /pack_moderation|pack approuvé|pack refusé|pack à corriger/i.test(t || ""), category: NOTIF_CATEGORIES.business, priority: NOTIF_PRIORITIES.standard },
   { test: (t) => /stock_alert|rupture de stock|produit en rupture|produit archivé/i.test(t || ""), category: NOTIF_CATEGORIES.business, priority: NOTIF_PRIORITIES.important },
   { test: (t) => /admin|incident|réclamation|reclamation|staff yorix|paiement bloqué/i.test(t || ""), category: NOTIF_CATEGORIES.admin, priority: NOTIF_PRIORITIES.critical },
@@ -43,7 +44,28 @@ const CATEGORY_ICONS = {
   [NOTIF_CATEGORIES.system]: "🔔",
   [NOTIF_CATEGORIES.business]: "💼",
   [NOTIF_CATEGORIES.admin]: "⚙️",
+  [NOTIF_CATEGORIES.catalog]: "🛍️",
 };
+
+/** Libellés FR pour chips / cloche / détail */
+export const NOTIF_CATEGORY_LABELS_FR = {
+  [NOTIF_CATEGORIES.messages]: "Messages",
+  [NOTIF_CATEGORIES.orders]: "Commandes",
+  [NOTIF_CATEGORIES.payments]: "Paiements",
+  [NOTIF_CATEGORIES.delivery]: "Livraison",
+  [NOTIF_CATEGORIES.business]: "Business",
+  [NOTIF_CATEGORIES.admin]: "Admin",
+  [NOTIF_CATEGORIES.security]: "Sécurité",
+  [NOTIF_CATEGORIES.promotions]: "Promos",
+  [NOTIF_CATEGORIES.system]: "Système",
+  [NOTIF_CATEGORIES.catalog]: "Catalogue",
+  catalog: "Catalogue",
+};
+
+export function getNotificationCategoryLabel(category) {
+  if (!category) return NOTIF_CATEGORY_LABELS_FR[NOTIF_CATEGORIES.system];
+  return NOTIF_CATEGORY_LABELS_FR[category] || NOTIF_CATEGORY_LABELS_FR[String(category)] || String(category);
+}
 
 /** @param {unknown} p */
 export function normalizeNotificationPriority(p) {
@@ -93,7 +115,8 @@ export function enrichNotification(row) {
   const type = row.type || "";
   const displayTitle = String(row.titre || row.title || "");
   const inferred = inferFromType(type, displayTitle, row.message);
-  const category = row.category || inferred.category;
+  const rawCategory = row.category || inferred.category;
+  const category = rawCategory === "catalog" ? NOTIF_CATEGORIES.catalog : rawCategory;
   const priority = normalizeNotificationPriority(row.priority || inferred.priority);
 
   return {
@@ -119,14 +142,20 @@ export function enrichNotification(row) {
 
 export function filterNotificationsByCategory(items, filterKey) {
   if (!filterKey || filterKey === "all") return items;
-  return (items || []).filter((n) => enrichNotification(n)._category === filterKey);
+  return (items || []).filter((n) => {
+    const cat = enrichNotification(n)._category;
+    if (filterKey === NOTIF_CATEGORIES.system) {
+      return cat === NOTIF_CATEGORIES.system || cat === NOTIF_CATEGORIES.catalog;
+    }
+    return cat === filterKey;
+  });
 }
 
 /** Notification navigateur (permission déjà accordée). */
 export function showBrowserNotificationIfPossible(enrichedRow, prefs) {
   if (typeof window === "undefined" || typeof Notification === "undefined") return;
   if (Notification.permission !== "granted") return;
-  if (!prefs?.pushBrowser) return;
+  if (!prefs?.desktopAlerts && !prefs?.pushBrowser) return;
   const cat = enrichedRow._category || NOTIF_CATEGORIES.system;
   if (prefs.categories && prefs.categories[cat] === false) return;
 

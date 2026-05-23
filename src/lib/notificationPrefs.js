@@ -3,6 +3,9 @@ import { NOTIF_CATEGORIES } from "../domain/notificationsDomain";
 const STORAGE_KEY = "yorix_notification_prefs_v1";
 
 const defaultPrefs = () => ({
+  pushEnabled: true,
+  desktopAlerts: true,
+  /** @deprecated utilise desktopAlerts — conservé pour rétrocompat localStorage */
   pushBrowser: true,
   sound: false,
   email: false,
@@ -18,6 +21,7 @@ const defaultPrefs = () => ({
     [NOTIF_CATEGORIES.system]: true,
     [NOTIF_CATEGORIES.business]: true,
     [NOTIF_CATEGORIES.admin]: true,
+    [NOTIF_CATEGORIES.catalog]: true,
   },
 });
 
@@ -27,11 +31,18 @@ export function loadNotificationPrefs() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultPrefs();
     const parsed = JSON.parse(raw);
-    return {
+    const merged = {
       ...defaultPrefs(),
       ...parsed,
       categories: { ...defaultPrefs().categories, ...(parsed.categories || {}) },
     };
+    if (merged.desktopAlerts === undefined) {
+      merged.desktopAlerts = parsed.pushBrowser !== false;
+    }
+    if (merged.pushEnabled === undefined) {
+      merged.pushEnabled = parsed.pushBrowser !== false;
+    }
+    return merged;
   } catch {
     return defaultPrefs();
   }
@@ -58,8 +69,11 @@ export function saveNotificationPrefs(partial) {
  */
 export function dbRowToPrefs(row) {
   if (!row) return null;
+  const desktopAlerts = row.desktop_alerts !== false;
   return {
-    pushBrowser: row.push_enabled !== false && row.desktop_alerts !== false,
+    pushEnabled: row.push_enabled !== false,
+    desktopAlerts,
+    pushBrowser: desktopAlerts,
     sound: row.sound_enabled === true,
     email: row.email_critical === true,
     sms: row.sms_critical === true,
@@ -86,8 +100,8 @@ export function prefsToDbRow(userId, prefs) {
   const c = prefs.categories || {};
   return {
     user_id: userId,
-    push_enabled: prefs.pushBrowser !== false,
-    desktop_alerts: prefs.pushBrowser !== false,
+    push_enabled: prefs.pushEnabled !== false,
+    desktop_alerts: prefs.desktopAlerts !== false,
     sound_enabled: prefs.sound === true,
     email_critical: prefs.email === true,
     sms_critical: prefs.sms === true,

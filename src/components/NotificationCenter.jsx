@@ -4,6 +4,7 @@ import {
   NOTIF_PRIORITIES,
   enrichNotification,
   filterNotificationsByCategory,
+  getNotificationCategoryLabel,
   getNotificationFullBody,
 } from "../domain/notificationsDomain";
 import { getNotificationOpenAction } from "../lib/notificationNavigation";
@@ -38,8 +39,7 @@ function priorityClass(p) {
 }
 
 function categoryLabelFr(key) {
-  const f = FILTERS.find((x) => x.key === key);
-  return f?.label || key;
+  return getNotificationCategoryLabel(key);
 }
 
 function NotificationDetailPanel({ raw, enriched, onClose, onOpen, onDismiss, siteLocale = "fr" }) {
@@ -132,6 +132,18 @@ export function NotificationCenter({
   const [filter, setFilter] = useState("all");
   const [selectedId, setSelectedId] = useState(initialSelectedId);
   const [prefs, setPrefs] = useState(() => loadNotificationPrefs());
+  const [viewportNarrow, setViewportNarrow] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 720,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mq = window.matchMedia("(max-width: 719px)");
+    const onChange = () => setViewportNarrow(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     if (initialSelectedId) setSelectedId(initialSelectedId);
@@ -150,6 +162,14 @@ export function NotificationCenter({
       cancelled = true;
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!initialSelectedId) return;
+    const raw = notifs.find((n) => String(n.id) === String(initialSelectedId));
+    if (raw && !raw.lu) {
+      onMarkRead?.(raw, { navigate: false, closeDrawer: false });
+    }
+  }, [initialSelectedId, notifs, onMarkRead]);
 
   const filtered = useMemo(() => filterNotificationsByCategory(notifs, filter === "all" ? null : filter), [notifs, filter]);
 
@@ -178,7 +198,7 @@ export function NotificationCenter({
     onMarkRead?.(raw, { navigate: false, closeDrawer: false });
   };
 
-  const showDetailOnly = variant === "page" && selectedRaw && typeof window !== "undefined" && window.innerWidth < 720;
+  const showDetailOnly = variant === "page" && selectedRaw && viewportNarrow;
 
   return (
     <div className={`notif-hub notif-hub--${variant}${selectedRaw ? " notif-hub--has-detail" : ""}`}>
@@ -301,6 +321,9 @@ export function NotificationCenter({
             siteLocale={siteLocale}
             onClose={() => setSelectedId(null)}
             onOpen={(raw) => {
+              if (!raw.lu) {
+                onMarkRead?.(raw, { navigate: false, closeDrawer: false });
+              }
               onOpenNotif?.(raw);
               if (variant === "dropdown") onClose?.();
             }}
@@ -315,8 +338,8 @@ export function NotificationCenter({
           <label className="notif-toggle">
             <input
               type="checkbox"
-              checked={prefs.pushBrowser}
-              onChange={(e) => updatePrefs({ pushBrowser: e.target.checked })}
+              checked={prefs.desktopAlerts !== false}
+              onChange={(e) => updatePrefs({ desktopAlerts: e.target.checked })}
             />
             Alertes bureau (navigateur ouvert)
           </label>

@@ -1,11 +1,14 @@
 /**
- * Cloche notifications header — dropdown paginé + temps réel Supabase.
+ * Cloche notifications header — dropdown paginé, sync via YorixApp (Realtime unique).
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "../lib/supabase";
-import { enrichNotification, getNotificationFullBody, showBrowserNotificationIfPossible } from "../domain/notificationsDomain";
+import {
+  enrichNotification,
+  getNotificationCategoryLabel,
+  getNotificationFullBody,
+} from "../domain/notificationsDomain";
 import { getNotificationOpenAction, stashNotificationOpenId } from "../lib/notificationNavigation";
-import { loadNotificationPrefs } from "../lib/notificationPrefs";
 
 const PAGE_SIZE = 10;
 
@@ -19,24 +22,15 @@ function timeAgo(date) {
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
-function iconForType(type) {
-  const t = (type || "").toLowerCase();
-  if (["orders", "order", "commande"].includes(t)) return "📦";
-  if (["messages", "message", "chat", "new_message"].includes(t)) return "💬";
-  if (["promos", "promo", "deals", "promotions"].includes(t)) return "🎁";
-  if (["loyalty", "fidelite", "points"].includes(t)) return "💎";
-  if (["delivery", "livraison"].includes(t)) return "🚚";
-  if (["payments", "payment", "paiement"].includes(t)) return "💳";
-  return "🔔";
-}
-
-function colorForType(type) {
-  const t = (type || "").toLowerCase();
-  if (["orders", "order", "commande"].includes(t)) return "#1a6b3a";
-  if (["messages", "message", "chat"].includes(t)) return "#2563eb";
-  if (["promos", "promo", "deals"].includes(t)) return "#dc2626";
-  if (["loyalty", "fidelite", "points"].includes(t)) return "#7c3aed";
-  return "#666";
+function colorForCategory(category) {
+  const c = (category || "").toLowerCase();
+  if (["orders", "order", "commande"].includes(c)) return "var(--green)";
+  if (["messages", "message", "chat"].includes(c)) return "#2563eb";
+  if (["promos", "promo", "promotions"].includes(c)) return "#dc2626";
+  if (["payments", "payment", "paiement"].includes(c)) return "#059669";
+  if (["delivery", "livraison"].includes(c)) return "#d97706";
+  if (["catalog"].includes(c)) return "var(--green)";
+  return "var(--gray)";
 }
 
 export function NotificationBell({
@@ -46,17 +40,19 @@ export function NotificationBell({
   onSync,
   onOpenNotification,
   onMarkNotifRead,
+  notifRevision = 0,
+  unreadNotifs,
 }) {
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [items, setItems] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [localUnread, setLocalUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const dropdownRef = useRef(null);
-  const channelRef = useRef(null);
-  const prefsRef = useRef(loadNotificationPrefs());
+
+  const unreadCount = unreadNotifs ?? localUnread;
 
   const fetchUnreadCount = useCallback(async () => {
     if (!user?.id) return;
@@ -65,7 +61,7 @@ export function NotificationBell({
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("lu", false);
-    setUnreadCount(count || 0);
+    setLocalUnread(count || 0);
   }, [user?.id]);
 
   const fetchNotifs = useCallback(
@@ -94,61 +90,15 @@ export function NotificationBell({
   );
 
   useEffect(() => {
-    if (!user?.id) return undefined;
-
+    if (!user?.id) return;
     fetchUnreadCount();
-
-    const channel = supabase
-      .channel(`notifications_bell:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const row = payload.new;
-          setItems((prev) => {
-            if (prev.some((n) => n.id === row.id)) return prev;
-            return [row, ...prev];
-          });
-          setUnreadCount((c) => c + 1);
-          onSync?.();
-          try {
-            showBrowserNotificationIfPossible(enrichNotification(row), prefsRef.current);
-          } catch {
-            /* ignore */
-          }
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          setItems((prev) => prev.map((n) => (n.id === payload.new.id ? payload.new : n)));
-          fetchUnreadCount();
-          onSync?.();
-        },
-      )
-      .subscribe();
-
-    channelRef.current = channel;
-
-    return () => {
-      if (channelRef.current) supabase.removeChannel(channelRef.current);
-    };
-  }, [user?.id, fetchUnreadCount, onSync]);
+  }, [user?.id, notifRevision, fetchUnreadCount]);
 
   useEffect(() => {
-    if (open && items.length === 0) fetchNotifs(0);
-  }, [open, items.length, fetchNotifs]);
+    if (!user?.id || !open) return;
+    fetchNotifs(0, false);
+    fetchUnreadCount();
+  }, [user?.id, open, notifRevision, fetchNotifs, fetchUnreadCount]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -165,7 +115,7 @@ export function NotificationBell({
     if (!user?.id) return;
     await supabase.from("notifications").update({ lu: true }).eq("id", notifId).eq("user_id", user.id);
     setItems((prev) => prev.map((n) => (n.id === notifId ? { ...n, lu: true } : n)));
-    setUnreadCount((c) => Math.max(0, c - 1));
+    setLocalUnread((c) => Math.max(0, c - 1));
     onSync?.();
   };
 
@@ -173,7 +123,7 @@ export function NotificationBell({
     if (!user?.id) return;
     await supabase.from("notifications").update({ lu: true }).eq("user_id", user.id).eq("lu", false);
     setItems((prev) => prev.map((n) => ({ ...n, lu: true })));
-    setUnreadCount(0);
+    setLocalUnread(0);
     onSync?.();
   };
 
@@ -186,7 +136,14 @@ export function NotificationBell({
     }
   };
 
-  const handleOpenSelected = (notif) => {
+  const handleOpenSelected = async (notif) => {
+    if (!notif.lu) {
+      if (onMarkNotifRead) {
+        await onMarkNotifRead(notif, { navigate: false, closeDrawer: false });
+      } else {
+        await markAsRead(notif.id);
+      }
+    }
     if (onOpenNotification?.(notif)) {
       setOpen(false);
       setSelectedId(null);
@@ -225,15 +182,16 @@ export function NotificationBell({
     @keyframes ybellPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
     .ybell-drop {
       position: absolute; top: calc(100% + 8px); right: 0;
-      width: min(380px, 92vw); max-height: 540px; background: #fff;
+      width: min(380px, 92vw); max-height: min(540px, calc(100vh - 96px));
+      background: var(--surface); color: var(--ink);
       border-radius: 14px; box-shadow: 0 22px 60px rgba(0, 0, 0, .18);
-      border: 1px solid #e5e5e5; overflow: hidden; display: flex; flex-direction: column;
+      border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;
       z-index: 9999; animation: ybellSlide .18s ease-out;
     }
     @keyframes ybellSlide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
     .ybell-head {
       padding: 14px 16px; background: linear-gradient(135deg, #0a1410, #1a3a24); color: #fff;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
     }
     .ybell-head-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; letter-spacing: -.3px; }
     .ybell-head-action {
@@ -242,58 +200,59 @@ export function NotificationBell({
       font-size: .68rem; font-weight: 700; cursor: pointer; font-family: inherit;
     }
     .ybell-head-action:disabled { opacity: .4; cursor: not-allowed; }
-    .ybell-list { flex: 1; overflow-y: auto; padding: 6px; }
-    .ybell-empty { padding: 50px 24px; text-align: center; color: #888; }
+    .ybell-list { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; -webkit-overflow-scrolling: touch; }
+    .ybell-empty { padding: 50px 24px; text-align: center; color: var(--gray); }
     .ybell-empty-ico { font-size: 2.6rem; opacity: .35; margin-bottom: 10px; }
     .ybell-item {
       display: flex; gap: 12px; padding: 12px; border-radius: 10px; cursor: pointer;
       transition: background .12s; position: relative;
     }
-    .ybell-item:hover { background: #f6f8f7; }
-    .ybell-item--unread { background: rgba(26, 107, 58, .04); }
+    .ybell-item:hover { background: var(--surface2); }
+    .ybell-item--unread { background: rgba(26, 107, 58, .06); }
     .ybell-item--unread::before {
       content: ''; position: absolute; top: 18px; left: 4px;
-      width: 6px; height: 6px; background: #1a6b3a; border-radius: 50%;
+      width: 6px; height: 6px; background: var(--green); border-radius: 50%;
     }
     .ybell-item-icon {
       width: 38px; height: 38px; border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; flex-shrink: 0; background: linear-gradient(135deg, #e8f5e9, #fff9e6);
+      font-size: 1.2rem; flex-shrink: 0; background: var(--green-pale);
+      border: 1px solid var(--border);
     }
     .ybell-item-content { flex: 1; min-width: 0; }
     .ybell-item-title {
       font-family: 'Syne', sans-serif; font-weight: 800; font-size: .86rem;
-      color: #111; margin-bottom: 2px; line-height: 1.25;
+      color: var(--ink); margin-bottom: 2px; line-height: 1.25;
     }
     .ybell-item-msg {
-      font-size: .78rem; color: #555; line-height: 1.4; margin-bottom: 4px;
+      font-size: .78rem; color: var(--gray); line-height: 1.4; margin-bottom: 4px;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .ybell-item-meta { display: flex; align-items: center; gap: 6px; font-size: .68rem; color: #888; }
+    .ybell-item-meta { display: flex; align-items: center; gap: 6px; font-size: .68rem; color: var(--gray); }
     .ybell-item-cat {
       display: inline-block; padding: 1px 7px; border-radius: 50px;
-      font-weight: 700; text-transform: uppercase; font-size: .62rem;
+      font-weight: 700; font-size: .62rem;
     }
-    .ybell-foot { border-top: 1px solid #e5e5e5; padding: 10px; display: flex; gap: 8px; }
+    .ybell-foot { border-top: 1px solid var(--border); padding: 10px; display: flex; gap: 8px; flex-shrink: 0; }
     .ybell-foot-btn {
-      flex: 1; padding: 9px; background: #f6f8f7; border: none; border-radius: 9px;
-      cursor: pointer; font-size: .78rem; font-weight: 700; color: #1a6b3a;
+      flex: 1; padding: 9px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 9px; cursor: pointer; font-size: .78rem; font-weight: 700; color: var(--green);
     }
     .ybell-foot-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .ybell-loading { text-align: center; padding: 12px; color: #888; font-size: .78rem; }
+    .ybell-loading { text-align: center; padding: 12px; color: var(--gray); font-size: .78rem; }
     .ybell-detail {
-      border-top: 1px solid #e5e5e5; padding: 12px 14px; background: #f9fafb;
-      max-height: 42vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      border-top: 1px solid var(--border); padding: 12px 14px; background: var(--surface2);
+      max-height: 42vh; overflow-y: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0;
     }
-    .ybell-detail-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: .92rem; margin: 0 0 8px; color: #111; }
-    .ybell-detail-body { font-size: .82rem; line-height: 1.55; color: #333; white-space: pre-wrap; word-break: break-word; margin: 0 0 12px; }
+    .ybell-detail-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: .92rem; margin: 0 0 8px; color: var(--ink); }
+    .ybell-detail-body { font-size: .82rem; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; margin: 0 0 12px; opacity: .9; }
     .ybell-detail-actions { display: flex; flex-direction: column; gap: 8px; }
     .ybell-detail-btn {
       padding: 11px 14px; border-radius: 9px; border: none; cursor: pointer;
       font-size: .78rem; font-weight: 700; font-family: inherit;
     }
-    .ybell-detail-btn--primary { background: #1a6b3a; color: #fff; }
-    .ybell-detail-btn--ghost { background: #fff; border: 1px solid #e5e5e5; color: #333; }
+    .ybell-detail-btn--primary { background: var(--green); color: #fff; }
+    .ybell-detail-btn--ghost { background: var(--surface); border: 1px solid var(--border); color: var(--ink); }
     .ybell-item--selected { background: rgba(26, 107, 58, .1); outline: 2px solid rgba(26, 107, 58, .25); }
   `;
 
@@ -357,6 +316,8 @@ export function NotificationBell({
                 <>
                   {items.map((n) => {
                     const enriched = enrichNotification(n);
+                    const cat = enriched._category;
+                    const catColor = colorForCategory(cat);
                     return (
                       <div
                         key={n.id}
@@ -366,7 +327,7 @@ export function NotificationBell({
                         tabIndex={0}
                         onKeyDown={(e) => e.key === "Enter" && handleSelectNotif(n)}
                       >
-                        <div className="ybell-item-icon">{n.icon || enriched._icon || iconForType(n.type)}</div>
+                        <div className="ybell-item-icon">{n.icon || enriched._icon}</div>
                         <div className="ybell-item-content">
                           <div className="ybell-item-title">{n.titre || n.title || enriched._title}</div>
                           <div className="ybell-item-msg">{enriched._body || n.message}</div>
@@ -374,11 +335,11 @@ export function NotificationBell({
                             <span
                               className="ybell-item-cat"
                               style={{
-                                background: `${colorForType(n.type)}18`,
-                                color: colorForType(n.type),
+                                background: `color-mix(in srgb, ${catColor} 14%, transparent)`,
+                                color: catColor,
                               }}
                             >
-                              {n.category || n.type || "system"}
+                              {getNotificationCategoryLabel(cat)}
                             </span>
                             <span>·</span>
                             <span>{timeAgo(n.created_at)}</span>

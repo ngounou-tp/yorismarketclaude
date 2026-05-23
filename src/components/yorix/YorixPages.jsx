@@ -560,7 +560,7 @@ export function YorixPages({ ctx }) {
             { icon: "🏠", label: "Accueil", p: "home" },
             { icon: "🛍️", label: "Produits", p: "produits" },
             { icon: "🛒", label: "Panier", p: "cart", drawer: true },
-            { icon: "🚚", label: "Livraison", p: "livraison" },
+            { icon: "🔔", label: "Alertes", p: "notifications" },
             { icon: "📊", label: "Mon espace", p: "dashboard" },
             { icon: "💬", label: "WhatsApp", p: "wa" },
           ].map((item) => (
@@ -576,6 +576,8 @@ export function YorixPages({ ctx }) {
                 } else if (item.p === "dashboard" && !user) {
                   setAuthTab("register");
                   setAuthOpen(true);
+                } else if (item.p === "notifications" && !user) {
+                  goPage("notifications");
                 } else if (item.drawer) {
                   openCart();
                 } else {
@@ -586,6 +588,9 @@ export function YorixPages({ ctx }) {
               <div className="mn-icon">{item.icon}</div>
               <div className="mn-label">{item.label}</div>
               {item.p === "cart" && totalQty > 0 && <div className="mn-badge">{totalQty}</div>}
+              {item.p === "notifications" && unread > 0 && user && (
+                <div className="mn-badge">{unread > 99 ? "99+" : unread}</div>
+              )}
               {item.p === "dashboard" && !user && (
                 <div
                   style={{
@@ -603,7 +608,6 @@ export function YorixPages({ ctx }) {
                   S'inscrire
                 </div>
               )}
-              {item.p === "dashboard" && unread > 0 && user && <div className="mn-badge">{unread}</div>}
             </div>
           ))}
         </div>
