@@ -12,7 +12,7 @@ import {
   CHAT_ESCROW_HINT,
   CHAT_ESCROW_BLOCK_TITLE,
 } from "../lib/chatSecurity";
-import { insertChatMessage } from "../lib/chatMessages";
+import { insertChatMessage, classifyChatInsertError } from "../lib/chatMessages";
 import { findOrCreateConversation } from "../lib/chatConversations";
 import { canWriteAdmin } from "../lib/roles";
 import { CHAT_CONVERSATIONS_LIMIT, CHAT_MESSAGES_LIMIT } from "../lib/queryLimits";
@@ -493,35 +493,41 @@ export function ChatUsers({
     // ✅ APRÈS : supprimé car setFeedback n'était jamais déclaré
     
     try {
-      const data = await insertChatMessage(supabase, {
+      const result = await insertChatMessage(supabase, {
         conversationId: activeId,
         senderId: user.id,
         content: text,
         imageUrl: pendingImage || null,
         linkUrl: link,
       });
+      const data = result.data;
       setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data]));
       setMessageInput("");
       setPendingImage("");
       setPendingLink("");
       hapticTap();
-      await supabase
-        .from("conversations")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("id", activeId);
+      if (!result.usedFallback) {
+        await supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("id", activeId);
+      }
       loadConversations();
       scrollToBottom(true);
-    } catch (err) {
-      console.warn("sendMessage:", err.message);
-      const msg = err.message || "erreur réseau";
-      if (/expediteur_id|category.*notifications/i.test(msg)) {
+      if (result.usedFallback && result.notificationOk === false) {
         showToast(
-          "Erreur serveur — exécutez la migration SQL notifications sur Supabase.",
-          "error",
-          6000,
+          "Message envoyé. La notification du destinataire sera retardée.",
+          "warning",
+          5000,
         );
+      }
+    } catch (err) {
+      console.warn("sendMessage:", err?.message || err);
+      const { kind, userMessage } = classifyChatInsertError(err);
+      if (kind === "notification") {
+        showToast(userMessage, "warning", 6000);
       } else {
-        showToast(`Message non envoyé : ${msg}`, "error");
+        showToast(userMessage, "error");
       }
     } finally {
       setSending(false);

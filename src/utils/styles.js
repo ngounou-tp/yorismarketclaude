@@ -834,6 +834,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);tran
 @keyframes msgSpin{to{transform:rotate(360deg);}}
 .yorix-toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom) + var(--msg-kb-offset,0px));transform:translateX(-50%);z-index:12000;display:flex;align-items:center;gap:10px;max-width:min(92vw,420px);padding:12px 14px;border-radius:14px;background:var(--ink);color:#fff;box-shadow:0 10px 40px rgba(0,0,0,.2);animation:yorixToastIn .28s ease;font-size:.82rem;font-weight:600;line-height:1.35;}
 .yorix-toast--error{background:linear-gradient(135deg,#991b1b,#dc2626);}
+.yorix-toast--warning{background:linear-gradient(135deg,#92400e,#d97706);}
 .yorix-toast--success{background:linear-gradient(135deg,var(--green),#145a32);}
 .yorix-toast--info{background:var(--ink);}
 .yorix-toast__icon{flex-shrink:0;font-size:1rem;}

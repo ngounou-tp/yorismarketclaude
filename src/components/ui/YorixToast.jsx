@@ -11,6 +11,7 @@ export function YorixToast({ toast, onClose }) {
   if (!toast) return null;
 
   const isError = toast.type === "error";
+  const isWarning = toast.type === "warning";
 
   return (
     <div
@@ -19,7 +20,7 @@ export function YorixToast({ toast, onClose }) {
       aria-live="polite"
     >
       <span className="yorix-toast__icon" aria-hidden>
-        {isError ? "⚠️" : toast.type === "success" ? "✓" : "ℹ️"}
+        {isError ? "⚠️" : isWarning ? "🔔" : toast.type === "success" ? "✓" : "ℹ️"}
       </span>
       <span className="yorix-toast__msg">{toast.msg}</span>
       <button type="button" className="yorix-toast__close" onClick={onClose} aria-label="Fermer">

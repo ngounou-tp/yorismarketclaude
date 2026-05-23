@@ -84,21 +84,21 @@ begin
     return NEW;
   end if;
 
-  if v_conv.user1_id = coalesce(NEW.sender_id, NEW.expediteur_id) then
+  if v_conv.user1_id = NEW.sender_id then
     v_recipient := v_conv.user2_id;
-  elsif v_conv.user2_id = coalesce(NEW.sender_id, NEW.expediteur_id) then
+  elsif v_conv.user2_id = NEW.sender_id then
     v_recipient := v_conv.user1_id;
   else
     return NEW;
   end if;
 
-  if v_recipient is null or v_recipient = coalesce(NEW.sender_id, NEW.expediteur_id) then
+  if v_recipient is null or v_recipient = NEW.sender_id then
     return NEW;
   end if;
 
   select coalesce(p.nom, 'Un membre Yorix') into v_sender_name
   from public.profiles p
-  where p.id = coalesce(NEW.sender_id, NEW.expediteur_id);
+  where p.id = NEW.sender_id;
 
   v_preview := left(
     coalesce(NEW.content, case when NEW.image_url is not null then '📷 Photo' else 'Nouveau message' end),
@@ -117,7 +117,7 @@ begin
     'important',
     jsonb_build_object(
       'conversation_id', v_conv.id,
-      'sender_id', coalesce(NEW.sender_id, NEW.expediteur_id)
+      'sender_id', NEW.sender_id
     )
   );
 
