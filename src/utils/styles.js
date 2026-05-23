@@ -2228,9 +2228,809 @@ button.yorix-chip.wa:hover{background:rgba(37,211,102,.14);border-color:var(--wa
 @media(prefers-reduced-motion:reduce){.yx-scroll-hint::after{animation:none;}}
 @media(max-width:768px){.yx-scroll-hint{display:none;}}
 
-/* ─── WA STICKY amélioration : seulement sur mobile + pulse ────────────── */
-.wa-sticky{animation:yx-pulse-ring 2.4s ease-out infinite;}
-@media(prefers-reduced-motion:reduce){.wa-sticky{animation:none;}}
-@media(min-width:769px){.wa-sticky{display:none!important;}}
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎯 YORIX CM - MOBILE FIXES V2 - REFONTE PREMIUM
+   Ce fichier surcharge tous les bugs visuels mobile sans casser le desktop
+   
+   À COLLER À LA FIN de ton fichier styles.js (juste avant le backtick fermant)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────────────────────────────────────
+   1️⃣ FIX CRITIQUE : DOUBLON BOUTON WHATSAPP
+   On garde uniquement .yorix-wa-fab (le bouton rond moderne)
+   On désactive complètement .wa-sticky (l'ancienne barre verte)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.wa-sticky {
+  display: none !important;
+}
+
+/* Le bouton WhatsApp moderne (.yorix-wa-fab) reste visible */
+.yorix-wa-fab {
+  display: flex !important;
+  animation: none !important; /* On enlève le pulse-ring qui était sur .wa-sticky */
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   2️⃣ FIX MOBILE : TOPBAR ULTRA-COMPACTE
+   Sur mobile (< 768px), masquer complètement la topbar.
+   Garder uniquement langue + drapeau dans le navbar.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Cacher toute la topbar - on rapatrie l'essentiel dans le navbar */
+  .topbar {
+    display: none !important;
+  }
+  
+  /* Cacher aussi la barre marketing "PARAPHARMECIE DES VICTOIRES" */
+  .yx-promo-banner,
+  [class*="promo-banner"] {
+    font-size: 0.7rem !important;
+    padding: 6px 10px !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+  
+  .yx-promo-banner .yx-promo-cta {
+    font-size: 0.65rem !important;
+    padding: 3px 8px !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   3️⃣ FIX MOBILE : NAVBAR HEADER OPTIMISÉE
+   Header simplifié : Logo + Recherche + Panier + Menu Burger
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+    height: auto !important;
+    min-height: 56px !important;
+  }
+  
+  /* Logo plus compact */
+  .logo-txt {
+    font-size: 1.25rem !important;
+    letter-spacing: -0.5px !important;
+  }
+  .logo-txt sup {
+    display: none !important;
+  }
+  
+  /* Barre de recherche prend toute la place dispo */
+  .nav-search-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+  
+  .nav-search {
+    border-radius: 20px !important;
+    box-shadow: none !important;
+    border: 1px solid var(--border) !important;
+  }
+  
+  /* Cacher le select catégorie sur mobile (trop dense) */
+  .nav-search select {
+    display: none !important;
+  }
+  
+  .nav-search input {
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .nav-search button {
+    padding: 0 12px !important;
+    font-size: 0.95rem !important;
+  }
+  
+  /* CACHER le bouton "Démarrer" sur mobile - il sera dans le menu burger */
+  .nav-cta-onboard {
+    display: none !important;
+  }
+
+  .nav-lang-mobile {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+  }
+
+  .nav-lang-mobile button {
+    background: none !important;
+    border: none !important;
+    padding: 2px 4px !important;
+    min-height: auto !important;
+    cursor: pointer !important;
+    color: var(--gray) !important;
+    font: inherit !important;
+  }
+
+  .nav-lang-mobile button.active {
+    color: var(--green) !important;
+    font-weight: 800 !important;
+  }
+
+  .user-menu-mobile {
+    display: block !important;
+    position: relative !important;
+  }
+
+  .nav-auth-desktop {
+    display: none !important;
+  }
+  
+  /* Actions header : on garde panier + avatar + menu, on cache le reste */
+  .nav-actions {
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .nav-actions .btn-ghost,
+  .nav-actions .btn-green,
+  .nav-actions .btn-red,
+  .nav-actions .btn-wa,
+  .nav-actions .dark-toggle {
+    display: none !important;
+  }
+  
+  /* Avatar plus visible */
+  .user-av {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.85rem !important;
+    border: 2px solid var(--green-pale) !important;
+  }
+  
+  /* Icônes panier/notif */
+  .icon-btn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1rem !important;
+    border: 1px solid var(--border) !important;
+    background: var(--surface) !important;
+  }
+  
+  /* Badge sur les icônes */
+  .ibadge {
+    background: #fbbf24 !important;
+    color: #0d1f14 !important;
+    font-weight: 800 !important;
+  }
+  
+  /* Cacher les role-chip sur mobile */
+  .role-chip {
+    display: none !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   4️⃣ FIX MOBILE : PAY STRIP (Paiement: MTN, Orange, Carte, J+1...)
+   Scroll horizontal au lieu de superposition
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .pay-strip {
+    padding: 8px 12px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 8px !important;
+    font-size: 0.7rem !important;
+    white-space: nowrap !important;
+    align-items: center !important;
+  }
+  
+  .pay-strip::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  /* Tous les éléments enfants restent sur une ligne */
+  .pay-strip > * {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+  
+  .pay-methods {
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .pm {
+    padding: 3px 8px !important;
+    font-size: 0.65rem !important;
+    border-radius: 6px !important;
+  }
+  
+  /* "Strip right" (Livraison offerte dès 50 000 FCFA) reste lisible */
+  .strip-right {
+    margin-left: 8px !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .strip-right > * {
+    font-size: 0.66rem !important;
+    color: var(--gray) !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   5️⃣ FIX MOBILE : ONGLETS DE NAVIGATION (Accueil, Produits, etc.)
+   Scroll horizontal propre avec scroll-snap
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .nav-tabs-row {
+    padding: 0 8px !important;
+    gap: 0 !important;
+  }
+  
+  .nav-tabs {
+    flex: 1 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    scroll-snap-type: x proximity !important;
+  }
+  
+  .nav-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .tab {
+    scroll-snap-align: start !important;
+    flex-shrink: 0 !important;
+    padding: 10px 14px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  
+  /* "Navigation" bouton plus compact */
+  .nav-quick-btn {
+    padding: 7px 11px !important;
+    font-size: 0.68rem !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* "Made in Cameroun" et les emotional buttons */
+  .yorix-emotional-nav {
+    padding: 6px 12px !important;
+    gap: 5px !important;
+  }
+  
+  .yorix-emotional-nav-btn {
+    padding: 5px 11px !important;
+    font-size: 0.66rem !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   6️⃣ FIX MOBILE : HERO SECTION
+   Plus aéré, CTA plus visibles, panneau de recherche au-dessus
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .hero,
+  .hp-hero-shell {
+    padding: 28px 16px 36px !important;
+  }
+  
+  .hero h1,
+  .hp-hero-shell h1 {
+    font-size: clamp(1.5rem, 6vw, 2rem) !important;
+    line-height: 1.15 !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .hero-sub,
+  .hp-hero-sub {
+    font-size: 0.82rem !important;
+    line-height: 1.65 !important;
+    margin-bottom: 18px !important;
+  }
+  
+  /* CTAs en colonne sur mobile pour plus de visibilité */
+  .hero-ctas,
+  .hp-hero-ctas {
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 22px !important;
+  }
+  
+  .hero-ctas .cta-y,
+  .hero-ctas .cta-w,
+  .hp-cta-primary,
+  .hp-cta-ghost {
+    width: 100% !important;
+    padding: 12px 18px !important;
+    font-size: 0.86rem !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+    min-height: 48px !important;
+  }
+  
+  /* Cacher la carte de recherche complexe sur mobile (trop dense) */
+  /* Si tu veux la garder, retire ce display:none */
+  .hero-card,
+  .hp-search-panel {
+    margin-top: 18px !important;
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+  
+  /* Stats du hero - plus compactes */
+  .hero-stats,
+  .yhm3-hero-stats {
+    gap: 14px !important;
+    margin-top: 14px !important;
+  }
+  
+  .stat-num,
+  .yhm3-hero-stat-val {
+    font-size: 1.2rem !important;
+  }
+  
+  .stat-lbl,
+  .yhm3-hero-stat-lbl {
+    font-size: 0.62rem !important;
+  }
+  
+  /* Hero chips/badges */
+  .hp-chip-scroller {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 8px !important;
+    margin: 0 -16px 14px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  
+  .hp-chip-scroller::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .hp-chip {
+    flex-shrink: 0 !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   7️⃣ FIX MOBILE : BOUTON WHATSAPP FLOTTANT
+   Position parfaite, au-dessus du bottom nav, taille tactile
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.yorix-wa-fab {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 26px !important;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4), 0 2px 6px rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.yorix-wa-fab:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5), 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
+@media (min-width: 901px) {
+  .yorix-fab-stack {
+    bottom: 28px !important;
+    right: 24px !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   8️⃣ FIX MOBILE : BOTTOM NAV (barre du bas)
+   4 items propres avec icônes claires
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .mobile-nav {
+    display: block !important;
+    background: #fff !important;
+    border-top: 1px solid var(--border) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom)) !important;
+  }
+  
+  .mn-inner {
+    padding: 4px 8px !important;
+  }
+  
+  .mn-item {
+    flex: 1 !important;
+    min-height: 52px !important;
+    padding: 6px 4px !important;
+    gap: 3px !important;
+    border-radius: 10px !important;
+    transition: background 0.2s ease !important;
+  }
+  
+  .mn-item:active {
+    background: var(--green-pale) !important;
+  }
+  
+  .mn-icon {
+    font-size: 1.4rem !important;
+    line-height: 1 !important;
+  }
+  
+  .mn-label {
+    font-size: 0.62rem !important;
+    font-weight: 600 !important;
+  }
+  
+  .mn-item.active .mn-icon,
+  .mn-item.active .mn-label {
+    color: var(--green) !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Badge sur Panier */
+  .mn-badge {
+    background: #fbbf24 !important;
+    color: #0d1f14 !important;
+    font-weight: 800 !important;
+    top: 4px !important;
+    right: calc(50% - 14px) !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   9️⃣ FIX MOBILE : SECTIONS GÉNÉRALES
+   Padding, marges, lisibilité
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .sec {
+    padding: 24px 16px !important;
+  }
+  
+  .sec-head {
+    margin-bottom: 14px !important;
+    gap: 10px !important;
+  }
+  
+  .sec-title {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Grille produits : 2 colonnes propres */
+  .prod-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  
+  .prod-card {
+    border-radius: 10px !important;
+  }
+  
+  .prod-img-wrap {
+    height: 130px !important;
+  }
+  
+  .prod-info {
+    padding: 9px !important;
+    gap: 4px !important;
+  }
+  
+  .prod-name {
+    font-size: 0.78rem !important;
+    -webkit-line-clamp: 2 !important;
+  }
+  
+  .price {
+    font-size: 0.9rem !important;
+  }
+  
+  /* Boutons produit plus tactiles */
+  .add-btn {
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+  
+  .btn-wa-sm,
+  .btn-cmd-sm {
+    padding: 7px 8px !important;
+    font-size: 0.66rem !important;
+    min-height: 36px !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   🔟 FIX GLOBAL : OVERFLOW & ZONES TACTILES
+   ─────────────────────────────────────────────────────────────────────────── */
+
+html, body, #root {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img, video {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Zone tactile minimum 44x44px sur tous les boutons */
+@media (max-width: 768px) {
+  button,
+  a[role="button"],
+  input[type="submit"],
+  input[type="button"],
+  .tab,
+  .mn-item,
+  .icon-btn,
+  .user-av {
+    min-height: 44px !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Inputs taille minimum pour éviter zoom iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   1️⃣1️⃣ FIX MOBILE : CART DRAWER
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .cart-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  .cart-header {
+    padding: 14px 16px !important;
+  }
+  
+  .cart-title {
+    font-size: 1rem !important;
+  }
+  
+  .cart-items {
+    padding: 10px 12px !important;
+  }
+  
+  .cart-item {
+    padding: 10px !important;
+  }
+  
+  .ci-img {
+    width: 64px !important;
+    height: 64px !important;
+  }
+  
+  .ci-name {
+    font-size: 0.82rem !important;
+  }
+  
+  .cart-footer {
+    padding: 12px 14px !important;
+  }
+  
+  .cart-pay-btn {
+    padding: 10px 8px !important;
+  }
+  
+  .cart-wa-confirm {
+    padding: 14px !important;
+    font-size: 0.88rem !important;
+    min-height: 48px !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   1️⃣2️⃣ FIX MOBILE : DASHBOARDS (Admin, Vendeur, etc.)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .dash-content {
+    padding: 0 !important;
+  }
+  
+  .dash-page-title {
+    font-size: 1.1rem !important;
+    margin-bottom: 14px !important;
+  }
+  
+  .dash-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  
+  .dstat {
+    padding: 12px !important;
+  }
+  
+  .dstat-val {
+    font-size: 1.15rem !important;
+  }
+  
+  .dstat-lbl {
+    font-size: 0.66rem !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   1️⃣3️⃣ FIX MOBILE : MODALS & POPUPS
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .modal {
+    padding: 20px 16px !important;
+    max-height: 90vh !important;
+    width: 95vw !important;
+    border-radius: 14px !important;
+  }
+  
+  .modal-title {
+    font-size: 1.1rem !important;
+  }
+  
+  .modal-sub {
+    font-size: 0.78rem !important;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 11px !important;
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+  
+  .form-submit {
+    padding: 13px !important;
+    font-size: 0.9rem !important;
+    min-height: 48px !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   1️⃣4️⃣ AMÉLIORATION : ANIMATIONS PLUS DOUCES
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   1️⃣5️⃣ FIX SPÉCIFIQUE : CACHER LE SPONSOR "PARAPHARMECIE" SUR MOBILE
+   Si c'est un partenaire, il pollue le mobile. À cacher.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Cible la ligne avec "Aide", "Contact", et le nom du sponsor */
+  .topbar-r {
+    display: none !important;
+  }
+  
+  /* Si le sponsor a une classe spécifique, on peut le cibler */
+  [class*="sponsor"],
+  [class*="partner-strip"] {
+    display: none !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   1️⃣6️⃣ MENU BURGER UTILISATEUR - VISIBLE SUR MOBILE
+   Pour Mon profil + Déconnexion accessibles facilement
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Menu burger utilisateur — mobile uniquement */
+.nav-lang-mobile,
+.user-menu-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+.user-menu-trigger {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: var(--green-pale) !important;
+  border: 2px solid var(--green) !important;
+  color: var(--green) !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+}
+
+/* Dropdown du menu user */
+.user-menu-dropdown {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  min-width: 220px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15) !important;
+  padding: 8px !important;
+  z-index: 1000 !important;
+}
+
+.user-menu-dropdown a,
+.user-menu-dropdown button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  color: var(--ink) !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  text-align: left !important;
+  min-height: 44px !important;
+}
+
+.user-menu-dropdown a:hover,
+.user-menu-dropdown button:hover {
+  background: var(--surface2) !important;
+}
+
+/* Le bouton déconnexion en rouge, bien visible */
+.user-menu-dropdown .logout-btn {
+  color: var(--red) !important;
+  font-weight: 600 !important;
+  border-top: 1px solid var(--border) !important;
+  margin-top: 4px !important;
+  padding-top: 12px !important;
+}
+
+.user-menu-dropdown .logout-btn:hover {
+  background: rgba(206, 17, 38, 0.08) !important;
+}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIN DES FIXES MOBILE V2
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 `;
