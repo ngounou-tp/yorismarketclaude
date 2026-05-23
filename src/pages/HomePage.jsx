@@ -797,37 +797,6 @@ export function HomePage({
           </div>
         </section>
 
-        <button
-          type="button"
-          className="yhm3-wa-sticky"
-          aria-label="Commande WhatsApp express"
-          onClick={() =>
-            window.open(
-              `https://wa.me/${YORIX_WA_NUMBER}?text=${encodeURIComponent("Bonjour Yorix ! Je veux passer commande 🛍️")}`,
-              "_blank",
-              "noopener,noreferrer",
-            )
-          }
-        >
-          <span aria-hidden>💬</span> WhatsApp express
-        </button>
-
-        <div className="wa-sticky">
-          <span className="wa-sticky-text">Commande express</span>
-          <button
-            type="button"
-            className="wa-sticky-btn"
-            onClick={() =>
-              window.open(
-                `https://wa.me/${YORIX_WA_NUMBER}?text=${encodeURIComponent("Bonjour Yorix ! Je veux passer commande 🛍️")}`,
-                "_blank",
-                "noopener,noreferrer",
-              )
-            }
-          >
-            WhatsApp
-          </button>
-        </div>
       </div>
     </>
   );

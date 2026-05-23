@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { buildEntitySlug, CITY_BY_SLUG } from "../../lib/seoRoutes";
+import { WhatsAppFab } from "../WhatsAppFab";
 import { supabase, YORIX_WA_NUMBER, MOMO_NUMBER, ORANGE_NUMBER, PAYMENT_WA_NUMBER } from "../../lib/supabase";
 import { ROLE_LABELS } from "../../lib/constants";
 import { isAdminViewer, canWriteAdmin } from "../../lib/roles";
@@ -117,8 +118,6 @@ export function YorixPages({ ctx }) {
     loyaltyPts,
     setLoyaltyPts,
     totalQty,
-    waOpen,
-    setWaOpen,
     tabActive,
     unread,
     openCart,
@@ -552,34 +551,7 @@ export function YorixPages({ ctx }) {
             {canWriteAdmin(userData) ? "⚙️ Admin Yorix" : "👁️ Consultation Yorix"}
           </button>
         )}
-        <div className="wa-float">
-          {waOpen && (
-            <div className="wa-card">
-              <div className="wa-card-title">💬 Contacter Yorix</div>
-              <div className="wa-card-sub">Support 7j/7 · Réponse rapide</div>
-              <a
-                href={`https://wa.me/${YORIX_WA_NUMBER}?text=${encodeURIComponent("Bonjour Yorix ! J'ai besoin d'aide.")}`}
-                target="_blank"
-                rel="noreferrer"
-                className="wa-link wa-link-green"
-              >
-                📱 WhatsApp +237 696 56 56 54
-              </a>
-              <a href="tel:+237696565654" className="wa-link wa-link-ghost">
-                📞 Appeler
-              </a>
-              <a href="mailto:support@yorix.cm" className="wa-link wa-link-ghost">
-                ✉️ support@yorix.cm
-              </a>
-            </div>
-          )}
-          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div className="wa-pulse" />
-            <button type="button" className="wa-btn" aria-expanded={waOpen} onClick={() => setWaOpen((o) => !o)}>
-              {waOpen ? "✕" : "💬"}
-            </button>
-          </div>
-        </div>
+        <WhatsAppFab />
       </div>
 
       <div className="mobile-nav">

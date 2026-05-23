@@ -341,7 +341,6 @@ export default function YorixApp() {
   }, [user?.id]);
 
   // Divers
-  const [waOpen, setWaOpen]                     = useState(false);
   const [nlEmail, setNlEmail]                   = useState("");
   const [nlSent, setNlSent]                     = useState(false);
   const [wishlist, setWishlist]                 = useState(new Set());
@@ -1589,8 +1588,6 @@ export default function YorixApp() {
     loyaltyPts,
     setLoyaltyPts,
     totalQty,
-    waOpen,
-    setWaOpen,
     tabActive,
     unread,
     openCart,
