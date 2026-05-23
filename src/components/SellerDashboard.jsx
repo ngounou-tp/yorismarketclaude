@@ -12,7 +12,11 @@ import {
   daysSinceOutOfStock,
   STOCK_STATUS,
 } from "../lib/stockStatus";
-import "./categories/categoryUi.css";
+import {
+  updateProduct,
+  toggleProductActive,
+  deleteProduct,
+} from "../lib/catalogMutations";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : SELLER DASHBOARD — Yorix CM (version complète)
@@ -332,18 +336,21 @@ export function SellerDashboard({
       alert("Nom et prix sont obligatoires."); return;
     }
     setLoadingAction(true);
-    const { error } = await supabase.from("products").update({
-      name_fr:        editForm.name_fr,
-      description_fr: editForm.description_fr,
-      prix:           Number(editForm.prix),
-      stock:          Number(editForm.stock || 0),
-      categorie:      editForm.categorie,
-      ville:          editForm.ville,
-    }).eq("id", id);
+    const res = await updateProduct({
+      productId: id,
+      payload: {
+        name_fr: editForm.name_fr,
+        description_fr: editForm.description_fr,
+        prix: Number(editForm.prix),
+        stock: Number(editForm.stock || 0),
+        categorie: editForm.categorie,
+        ville: editForm.ville,
+      },
+      actor: { userId: user?.id, profile: userData },
+    });
 
-    if (error) {
-      console.error(error);
-      alert("Erreur modification : " + error.message);
+    if (!res.ok) {
+      alert("Erreur modification : " + res.error);
       setLoadingAction(false);
       return;
     }
@@ -360,18 +367,38 @@ export function SellerDashboard({
       return;
     }
     setLoadingAction(true);
-    const { error } = await supabase.from("products").update({ actif: !current }).eq("id", id);
-    if (error) { console.error(error); alert("Erreur : " + error.message); setLoadingAction(false); return; }
+    const res = await toggleProductActive({
+      productId: id,
+      currentActive: current,
+      actor: { userId: user?.id, profile: userData },
+    });
+    if (!res.ok) { alert("Erreur : " + res.error); setLoadingAction(false); return; }
     setMesProduits(prev => prev.map(p => p.id === id ? { ...p, actif: !current } : p));
     setLoadingAction(false);
   };
 
   // ── SUPPRESSION PRODUIT ──
-  const deleteProduct = async (id) => {
+  const deleteProductHandler = async (id) => {
     setLoadingAction(true);
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) { console.error(error); alert("Erreur suppression : " + error.message); setLoadingAction(false); return; }
-    setMesProduits(prev => prev.filter(p => p.id !== id));
+    const res = await deleteProduct({
+      productId: id,
+      actor: { userId: user?.id, profile: userData },
+    });
+    if (!res.ok) {
+      alert("Erreur suppression : " + res.error);
+      setLoadingAction(false);
+      return;
+    }
+    if (res.mode === "soft") {
+      setMesProduits(prev => prev.map(p => p.id === id ? {
+        ...p,
+        actif: false,
+        is_archived: true,
+        hidden_from_marketplace: true,
+      } : p));
+    } else {
+      setMesProduits(prev => prev.filter(p => p.id !== id));
+    }
     setPendingDelete(null);
     setLoadingAction(false);
   };
@@ -425,7 +452,7 @@ export function SellerDashboard({
               <button
                 disabled={loadingAction}
                 style={{ ...S.btnRed, background: "#ce1126", color: "#fff", border: "none", padding: "8px 20px" }}
-                onClick={() => deleteProduct(pendingDelete.id)}
+                onClick={() => deleteProductHandler(pendingDelete.id)}
               >
                 {loadingAction ? t("products.deleting") : t("products.delete")}
               </button>

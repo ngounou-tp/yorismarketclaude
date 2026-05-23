@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category.dart';
 import '../models/product.dart';
@@ -6,10 +7,13 @@ import '../services/category_repository.dart';
 import '../services/product_repository.dart';
 
 class CatalogProvider extends ChangeNotifier {
-  CatalogProvider(this._products, this._categoryRepo);
+  CatalogProvider(this._products, this._categoryRepo, this._client);
 
   final ProductRepository _products;
   final CategoryRepository _categoryRepo;
+  final SupabaseClient _client;
+
+  RealtimeChannel? _realtimeChannel;
 
   List<Product> _all = [];
   List<MarketplaceCategory> _categories = List.of(kDefaultCategories);
@@ -61,6 +65,7 @@ class CatalogProvider extends ChangeNotifier {
       final cats = await categoriesFuture;
       if (cats.isNotEmpty) _categories = cats;
       _error = null;
+      _ensureRealtime();
     } catch (e) {
       _error = 'Connexion impossible. Vérifiez votre réseau.';
       if (kDebugMode) _error = '$_error\n$e';
@@ -68,6 +73,25 @@ class CatalogProvider extends ChangeNotifier {
       _loading = false;
       notifyListeners();
     }
+  }
+
+  void _ensureRealtime() {
+    if (_realtimeChannel != null) return;
+    _realtimeChannel = _client
+        .channel('prod_rt_mobile')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'products',
+          callback: (_) => load(),
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    _realtimeChannel?.unsubscribe();
+    super.dispose();
   }
 
   void setQuery(String q) {

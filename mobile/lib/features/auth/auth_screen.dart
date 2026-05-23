@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/yorix_theme.dart';
+import '../../models/user_profile.dart';
+import '../../services/profile_repository.dart';
+import '../../services/user_mutations.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -13,6 +16,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _profiles = ProfileRepository(Supabase.instance.client);
   bool _signUp = false;
   bool _loading = false;
   String? _error;
@@ -24,6 +28,16 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  Future<bool> _enforceProfileAccess(String uid) async {
+    final profile = await _profiles.fetchById(uid);
+    if (isProfileAccessible(profile)) return true;
+    await Supabase.instance.client.auth.signOut();
+    setState(() {
+      _error = 'Ce compte est suspendu ou supprimé. Contactez le support Yorix.';
+    });
+    return false;
+  }
+
   Future<void> _submit() async {
     setState(() {
       _loading = true;
@@ -32,9 +46,28 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       final auth = Supabase.instance.client.auth;
       if (_signUp) {
-        await auth.signUp(email: _email.text.trim(), password: _password.text);
+        final res = await auth.signUp(
+          email: _email.text.trim(),
+          password: _password.text,
+        );
+        final uid = res.user?.id;
+        if (uid != null) {
+          await Supabase.instance.client.from('profiles').upsert({
+            'id': uid,
+            'email': _email.text.trim(),
+            'role': 'buyer',
+            'actif': true,
+            'verifie': false,
+            'langue': 'fr',
+          });
+        }
       } else {
-        await auth.signInWithPassword(email: _email.text.trim(), password: _password.text);
+        final res = await auth.signInWithPassword(
+          email: _email.text.trim(),
+          password: _password.text,
+        );
+        final uid = res.user?.id;
+        if (uid != null && !await _enforceProfileAccess(uid)) return;
       }
       if (mounted) Navigator.of(context).pop(true);
     } on AuthException catch (e) {

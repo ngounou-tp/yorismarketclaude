@@ -15,6 +15,9 @@ class Product {
     this.city,
     this.vendeurId,
     this.imageUrls = const [],
+    this.actif = true,
+    this.isArchived = false,
+    this.hiddenFromMarketplace = false,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -41,6 +44,9 @@ class Product {
       city: json['ville']?.toString(),
       vendeurId: json['vendeur_id']?.toString(),
       imageUrls: _imageUrls(json),
+      actif: json['actif'] != false,
+      isArchived: json['is_archived'] == true,
+      hiddenFromMarketplace: json['hidden_from_marketplace'] == true,
     );
   }
 
@@ -59,9 +65,16 @@ class Product {
   final String? city;
   final String? vendeurId;
   final List<String> imageUrls;
+  final bool actif;
+  final bool isArchived;
+  final bool hiddenFromMarketplace;
 
   bool get inStock => stock > 0;
   bool get lowStock => stock > 0 && stock <= 5;
+
+  /// Aligné catalogue web — exclut soft-deleted / archivés.
+  bool get isVisibleOnMarketplace =>
+      actif && !isArchived && !hiddenFromMarketplace;
 
   static List<String> _imageUrls(Map<String, dynamic> json) {
     final out = <String>[];

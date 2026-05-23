@@ -31,6 +31,7 @@ class YorixMarketApp extends StatelessWidget {
           create: (_) => CatalogProvider(
             ProductRepository(client),
             CategoryRepository(client),
+            client,
           )..load(),
         ),
       ],

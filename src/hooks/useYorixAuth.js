@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { getUserProfile, getUserRole, sendEmail, emailBienvenue } from "../utils/helpers";
+import { isProfileAccessible } from "../lib/userMutations";
 
 /**
  * Session Supabase, profil, modale auth / contrat, actions login-register-logout.
@@ -31,15 +32,27 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
 
   const [pendingAction, setPendingAction] = useState(null);
 
+  const enforceProfileAccess = useCallback(async (profile) => {
+    if (!profile || isProfileAccessible(profile)) return true;
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserData(null);
+    setUserRole(null);
+    setNotifs([]);
+    setAuthError("Ce compte est suspendu ou supprimé. Contactez le support Yorix.");
+    return false;
+  }, [setNotifs]);
+
   const chargerProfil = useCallback(
     async (uid) => {
       const profile = await getUserProfile(uid);
+      if (!(await enforceProfileAccess(profile))) return;
       const role = getUserRole(profile);
       setUserData(profile);
       setUserRole(role);
       await onProfileLoaded(uid);
     },
-    [onProfileLoaded],
+    [onProfileLoaded, enforceProfileAccess],
   );
 
   useEffect(() => {
@@ -107,6 +120,11 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
       if (error) throw error;
       setUser(data.user);
       await chargerProfil(data.user.id);
+      const fresh = await getUserProfile(data.user.id);
+      if (!isProfileAccessible(fresh)) {
+        setAuthLoading(false);
+        return;
+      }
       setAuthOpen(false);
       if (pendingAction) {
         setTimeout(() => executePendingAction(pendingAction), 300);

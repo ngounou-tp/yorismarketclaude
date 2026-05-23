@@ -26,6 +26,18 @@ import {
   openWhatsApp,
   buildMsgLivreurAssignation,
 } from "../utils/deliveryWorkflow";
+import {
+  updateProduct,
+  toggleProductActive,
+  deleteProduct,
+} from "../lib/catalogMutations";
+import {
+  updateUserRole,
+  toggleUserActive,
+  toggleUserVerified,
+  softBanUser,
+  hardDeleteUser,
+} from "../lib/userMutations";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : ADMIN DASHBOARD — Yorix CM (version pro complète)
@@ -151,7 +163,6 @@ export function AdminDashboard({ user, userData, goPage }) {
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
 
       const results = await Promise.allSettled([
-        supabase.from("users").select("*").order("created_at", { ascending: false }).limit(1000),
         supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(1000),
         supabase.from("products").select("*").order("created_at", { ascending: false }).limit(1000),
         supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(1000),
@@ -177,7 +188,6 @@ export function AdminDashboard({ user, userData, goPage }) {
       ]);
 
       const [
-        usersR,
         profilesR,
         prodsR,
         ordersR,
@@ -192,7 +202,6 @@ export function AdminDashboard({ user, userData, goPage }) {
         delivLogR,
       ] = results;
 
-      const rawUsers    = usersR.status    === "fulfilled" ? (usersR.value.data    || []) : [];
       const rawProfiles = profilesR.status === "fulfilled" ? (profilesR.value.data || []) : [];
       const prodsData   = prodsR.status    === "fulfilled" ? (prodsR.value.data    || []) : [];
       const ordersData  = ordersR.status   === "fulfilled" ? (ordersR.value.data   || []) : [];
@@ -249,15 +258,7 @@ export function AdminDashboard({ user, userData, goPage }) {
         });
       }
 
-      // Fusionner users + profiles (dédupliqué par id/uid)
-      const mergedMap = new Map();
-      [...rawUsers, ...rawProfiles].forEach(u => {
-        const key = u.uid || u.id;
-        if (!key) return;
-        const existing = mergedMap.get(key) || {};
-        mergedMap.set(key, { ...existing, ...u, uid: key });
-      });
-      const usersData = Array.from(mergedMap.values());
+      const usersData = rawProfiles.map((p) => ({ ...p, uid: p.id }));
 
       const livreursData = usersData.filter(u => u.role === "delivery");
 
@@ -318,7 +319,7 @@ export function AdminDashboard({ user, userData, goPage }) {
       setPaymentTx(paymentsData);
 
       if (usersData.length === 0 && prodsData.length === 0 && ordersData.length === 0) {
-        setLoadError("⚠️ Aucune donnée chargée. Vérifiez les politiques RLS Supabase (tables users, products, orders).");
+        setLoadError("⚠️ Aucune donnée chargée. Vérifiez les politiques RLS Supabase (profiles, products, orders).");
       }
     } catch (e) {
       console.error("[Admin] ❌ Erreur critique:", e);
@@ -478,17 +479,38 @@ export function AdminDashboard({ user, userData, goPage }) {
   // ═══════════ ACTIONS PRODUITS ═══════════
   const supprimerProduit = async (id, nom) => {
     if (!requireWrite()) return;
-    if (!window.confirm(`Supprimer le produit "${nom}" ?`)) return;
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) { showToast("Erreur : " + error.message, "error"); return; }
-    setProduits(p => p.filter(x => x.id !== id));
-    showToast(`Produit "${nom}" supprimé`);
+    if (!window.confirm(`Supprimer / archiver le produit "${nom}" ?`)) return;
+    const hardDelete = window.confirm(
+      "Suppression DÉFINITIVE de la base ?\n\nOK = supprimer (si aucune commande)\nAnnuler = archiver uniquement",
+    );
+    const res = await deleteProduct({
+      productId: id,
+      actor: { userId: user?.id, profile: userData },
+      hardDelete,
+    });
+    if (!res.ok) { showToast("Erreur : " + res.error, "error"); return; }
+    if (res.mode === "soft") {
+      setProduits(p => p.map(x => x.id === id ? {
+        ...x,
+        actif: false,
+        is_archived: true,
+        hidden_from_marketplace: true,
+      } : x));
+      showToast(res.hasOrders ? `Produit archivé (commandes existantes)` : `Produit "${nom}" désactivé`);
+    } else {
+      setProduits(p => p.filter(x => x.id !== id));
+      showToast(`Produit "${nom}" supprimé définitivement`);
+    }
   };
 
   const toggleActifProduit = async (id, actif) => {
     if (!requireWrite()) return;
-    const { error } = await supabase.from("products").update({ actif: !actif }).eq("id", id);
-    if (error) { showToast("Erreur : " + error.message, "error"); return; }
+    const res = await toggleProductActive({
+      productId: id,
+      currentActive: actif,
+      actor: { userId: user?.id, profile: userData },
+    });
+    if (!res.ok) { showToast("Erreur : " + res.error, "error"); return; }
     setProduits(p => p.map(x => x.id === id ? { ...x, actif: !actif } : x));
     showToast(actif ? "Produit désactivé" : "Produit activé");
   };
@@ -501,9 +523,13 @@ export function AdminDashboard({ user, userData, goPage }) {
       local: status === "verified" || status === "declared" || status === "auto",
       made_in_cameroon_verified_at: status === "verified" ? new Date().toISOString() : null,
     };
-    const { error } = await supabase.from("products").update(payload).eq("id", id);
-    if (error) {
-      showToast("Erreur MIC : " + error.message, "error");
+    const res = await updateProduct({
+      productId: id,
+      payload,
+      actor: { userId: user?.id, profile: userData },
+    });
+    if (!res.ok) {
+      showToast("Erreur MIC : " + res.error, "error");
       return;
     }
     setProduits((p) => p.map((x) => (x.id === id ? { ...x, ...payload } : x)));
@@ -516,38 +542,53 @@ export function AdminDashboard({ user, userData, goPage }) {
     );
   };
 
-  // ═══════════ ACTIONS UTILISATEURS ═══════════
+  // ═══════════ ACTIONS UTILISATEURS (profiles uniquement) ═══════════
   const changerRole = async (uid, newRole) => {
     if (!requireWrite()) return;
-    const [r1, r2] = await Promise.all([
-      supabase.from("users").update({ role: newRole }).eq("uid", uid),
-      supabase.from("profiles").update({ role: newRole }).eq("id", uid),
-    ]);
-    if (r1.error && r2.error) { showToast("Erreur changement rôle", "error"); return; }
+    const res = await updateUserRole({ userId: uid, newRole, actorProfile: userData });
+    if (!res.ok) { showToast("Erreur changement rôle : " + res.error, "error"); return; }
     setUtilisateurs(u => u.map(x => (x.uid || x.id) === uid ? { ...x, role: newRole } : x));
     showToast(`Rôle changé → ${ADMIN_ROLE_LABELS[newRole] || newRole}`);
   };
 
   const supprimerUser = async (uid, email) => {
     if (!requireWrite()) return;
-    if (!window.confirm(`Supprimer "${email}" ?`)) return;
-    const { error } = await supabase.from("users").delete().eq("uid", uid);
-    if (error) { showToast("Erreur : " + error.message, "error"); return; }
-    setUtilisateurs(u => u.filter(x => (x.uid || x.id) !== uid));
-    showToast(`Utilisateur supprimé`);
+    const hard = window.confirm(
+      `Suppression DÉFINITIVE de "${email}" ?\n\nOK = anonymisation irréversible\nAnnuler = suspension réversible uniquement`,
+    );
+    if (hard) {
+      if (!window.confirm(`Confirmer la suppression définitive de "${email}" ?`)) return;
+      const res = await hardDeleteUser({ userId: uid, actorProfile: userData });
+      if (!res.ok) { showToast("Erreur : " + res.error, "error"); return; }
+      setUtilisateurs(u => u.map(x => (x.uid || x.id) === uid ? {
+        ...x,
+        actif: false,
+        deleted_at: new Date().toISOString(),
+        nom: "Utilisateur supprimé",
+        email: `deleted+${uid}@yorix.local`,
+      } : x));
+      showToast("Utilisateur supprimé définitivement (profil anonymisé)");
+      return;
+    }
+    if (!window.confirm(`Suspendre "${email}" ? (réversible)`)) return;
+    const res = await softBanUser({ userId: uid, actorProfile: userData });
+    if (!res.ok) { showToast("Erreur : " + res.error, "error"); return; }
+    setUtilisateurs(u => u.map(x => (x.uid || x.id) === uid ? { ...x, actif: false } : x));
+    showToast(`Utilisateur "${email}" suspendu`);
   };
 
   const toggleVendeur = async (uid, actif) => {
     if (!requireWrite()) return;
-    const { error } = await supabase.from("users").update({ actif: !actif }).eq("uid", uid);
-    if (error) { showToast("Erreur : " + error.message, "error"); return; }
+    const res = await toggleUserActive({ userId: uid, currentlyActive: actif, actorProfile: userData });
+    if (!res.ok) { showToast("Erreur : " + res.error, "error"); return; }
     setUtilisateurs(u => u.map(x => (x.uid || x.id) === uid ? { ...x, actif: !actif } : x));
-    showToast(actif ? "Vendeur suspendu" : "Vendeur réactivé");
+    showToast(actif ? "Compte suspendu" : "Compte réactivé");
   };
 
   const verifierUser = async (uid, verifie) => {
     if (!requireWrite()) return;
-    await supabase.from("users").update({ verifie: !verifie }).eq("uid", uid).catch(() => {});
+    const res = await toggleUserVerified({ userId: uid, currentlyVerified: verifie, actorProfile: userData });
+    if (!res.ok) { showToast("Erreur vérification", "error"); return; }
     setUtilisateurs(u => u.map(x => (x.uid || x.id) === uid ? { ...x, verifie: !verifie } : x));
     showToast(verifie ? "Vérification retirée" : "Utilisateur vérifié ✅");
   };
@@ -1678,7 +1719,7 @@ export function AdminDashboard({ user, userData, goPage }) {
                 <p>Aucun utilisateur trouvé</p>
                 {utilisateurs.length === 0 && (
                   <p style={{ fontSize: ".78rem", marginTop: 10, color: "#ce1126" }}>
-                    💡 Si la table users/profiles existe, vérifie les politiques RLS
+                    💡 Source unique : table profiles (RLS admin). Legacy users migrée automatiquement.
                   </p>
                 )}
               </div>
