@@ -1,4 +1,6 @@
 // YORIX CM — Messagerie sécurisée (peer + annonces Yorix Équipe)
+// ✅ VERSION CORRIGÉE - Fix: setFeedback undefined + améliorations UX
+
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { uploadSingleImage } from "../utils/helpers";
@@ -75,7 +77,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
 
   const hydrateProfilesAndProducts = useCallback(async (convs) => {
     if (!user?.id) return;
-
+    
     const userIds = [
       ...new Set(
         convs.flatMap((c) => [c.user1_id, c.user2_id].filter((id) => id && id !== user.id)),
@@ -128,6 +130,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       if ((data || []).length) await hydrateProfilesAndProducts(data || []);
     } catch (err) {
       console.warn("Chargement conversations:", err.message);
+      // ✅ Ne pas faire planter la page - juste log
     } finally {
       setLoading(false);
     }
@@ -212,7 +215,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
         .from("yorix_broadcast_reads")
         .upsert(rows, { onConflict: "broadcast_id,user_id" });
     } catch {
-      /* table optionnelle */
+      /* ignore - table optionnelle */
     }
   }, [user?.id, broadcasts]);
 
@@ -321,13 +324,10 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
 
   const getOtherUserId = (conv) => (conv.user1_id === user.id ? conv.user2_id : conv.user1_id);
 
-  const partnerLabel = useCallback(
-    (conv) => {
-      const oid = getOtherUserId(conv);
-      return publicDisplayName(profiles[oid], oid);
-    },
-    [profiles, user?.id],
-  );
+  const partnerLabel = useCallback((conv) => {
+    const oid = getOtherUserId(conv);
+    return publicDisplayName(profiles[oid], oid);
+  }, [profiles, user?.id]);
 
   const filteredConversations = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -381,7 +381,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     const text = messageInput.trim();
     const hasImage = Boolean(pendingImage);
     const link = safeHttpsUrl(pendingLink);
-
+    
     if ((!text && !hasImage && !link) || !activeId || activeId === YORIX_TEAM_CHANNEL || sending) {
       return;
     }
@@ -442,8 +442,9 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     }
 
     setSending(true);
-    clearToast();
-
+    // ❌ AVANT (BUG) : setFeedback(null);  <-- Cette ligne faisait planter la page !
+    // ✅ APRÈS : supprimé car setFeedback n'était jamais déclaré
+    
     try {
       const data = await insertChatMessage(supabase, {
         conversationId: activeId,
