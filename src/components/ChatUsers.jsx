@@ -2,7 +2,14 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { uploadSingleImage } from "../utils/helpers";
-import { filtrerMsg, publicDisplayName, adminContactLines, CHAT_ESCROW_GUIDANCE, CHAT_ESCROW_HINT, CHAT_ESCROW_BLOCK_TITLE } from "../lib/chatSecurity";
+import {
+  filtrerMsg,
+  publicDisplayName,
+  adminContactLines,
+  CHAT_ESCROW_GUIDANCE,
+  CHAT_ESCROW_HINT,
+  CHAT_ESCROW_BLOCK_TITLE,
+} from "../lib/chatSecurity";
 import { insertChatMessage } from "../lib/chatMessages";
 import { findOrCreateConversation } from "../lib/chatConversations";
 import { canWriteAdmin } from "../lib/roles";
@@ -12,7 +19,6 @@ import { NewMessageModal } from "./chat/NewMessageModal";
 import { YorixToast, useYorixToast } from "./ui/YorixToast";
 
 export const YORIX_TEAM_CHANNEL = "__yorix_team__";
-
 
 function safeHttpsUrl(raw) {
   if (!raw || typeof raw !== "string") return null;
@@ -67,29 +73,46 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     }
   };
 
-  const startConversation = useCallback(async (targetUserId, productId = null) => {
-    if (!user?.id || !targetUserId || user.id === targetUserId) return;
+  const hydrateProfilesAndProducts = useCallback(async (convs) => {
+    if (!user?.id) return;
 
-    try {
-      const conv = await findOrCreateConversation(supabase, user.id, targetUserId, productId);
-      setShowNewMessage(false);
-      setActiveId(conv.id);
-      setMobileShowThread(true);
-      await loadConversations();
-      setTimeout(() => composeInputRef.current?.focus(), 120);
-    } catch (err) {
-      console.error("startConversation:", err);
-      showToast(err.message || "Impossible d'ouvrir la conversation", "error");
+    const userIds = [
+      ...new Set(
+        convs.flatMap((c) => [c.user1_id, c.user2_id].filter((id) => id && id !== user.id)),
+      ),
+    ];
+    const productIds = [...new Set(convs.map((c) => c.product_id).filter(Boolean))];
+
+    if (userIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nom, email, telephone, ville, role")
+        .in("id", userIds);
+      setProfiles((prev) => {
+        const next = { ...prev };
+        (profs || []).forEach((p) => {
+          next[p.id] = p;
+        });
+        return next;
+      });
     }
-  }, [user?.id, showToast]);
 
-  useEffect(() => {
-    if (initialProduct?.vendeur_id && user?.id && initialProduct.vendeur_id !== user.id) {
-      startConversation(initialProduct.vendeur_id, initialProduct.id);
+    if (productIds.length) {
+      const { data: prods } = await supabase
+        .from("produits")
+        .select("id, name_fr, prix, image")
+        .in("id", productIds);
+      setProducts((prev) => {
+        const next = { ...prev };
+        (prods || []).forEach((p) => {
+          next[p.id] = p;
+        });
+        return next;
+      });
     }
-  }, [initialProduct?.id, initialProduct?.vendeur_id, user?.id, startConversation]);
+  }, [user?.id]);
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     try {
@@ -105,11 +128,12 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       if ((data || []).length) await hydrateProfilesAndProducts(data || []);
     } catch (err) {
       console.warn("Chargement conversations:", err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [user?.id, hydrateProfilesAndProducts]);
 
-  const loadBroadcasts = async () => {
+  const loadBroadcasts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("yorix_broadcasts")
@@ -124,55 +148,34 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     } catch (err) {
       console.warn("broadcasts:", err.message);
     }
-  };
+  }, []);
 
-  const hydrateProfilesAndProducts = async (convs) => {
-    const userIds = [...new Set(
-      convs.flatMap((c) => [c.user1_id, c.user2_id].filter((id) => id && id !== user.id))
-    )];
-    const productIds = [...new Set(convs.map((c) => c.product_id).filter(Boolean))];
+  const startConversation = useCallback(
+    async (targetUserId, productId = null) => {
+      if (!user?.id || !targetUserId || user.id === targetUserId) return;
 
-    if (userIds.length) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, nom, email, telephone, ville, role")
-        .in("id", userIds);
-      setProfiles((prev) => {
-        const next = { ...prev };
-        (profs || []).forEach((p) => { next[p.id] = p; });
-        return next;
-      });
-    }
-
-    if (productIds.length) {
-      const { data: prods } = await supabase
-        .from("produits")
-        .select("id, name_fr, prix, image")
-        .in("id", productIds);
-      setProducts((prev) => {
-        const next = { ...prev };
-        (prods || []).forEach((p) => { next[p.id] = p; });
-        return next;
-      });
-    }
-  };
+      try {
+        const conv = await findOrCreateConversation(supabase, user.id, targetUserId, productId);
+        setShowNewMessage(false);
+        setActiveId(conv.id);
+        setMobileShowThread(true);
+        await loadConversations();
+        setTimeout(() => composeInputRef.current?.focus(), 120);
+      } catch (err) {
+        console.error("startConversation:", err);
+        showToast(err.message || "Impossible d'ouvrir la conversation", "error");
+      }
+    },
+    [user?.id, showToast, loadConversations],
+  );
 
   useEffect(() => {
-    if (!user?.id) return;
-    loadConversations();
-    loadBroadcasts();
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!activeId || activeId === YORIX_TEAM_CHANNEL) {
-      if (activeId !== YORIX_TEAM_CHANNEL) setMessages([]);
-      return;
+    if (initialProduct?.vendeur_id && user?.id && initialProduct.vendeur_id !== user.id) {
+      startConversation(initialProduct.vendeur_id, initialProduct.id);
     }
-    loadMessages(activeId);
-    markPeerMessagesRead(activeId);
-  }, [activeId, user?.id]);
+  }, [initialProduct?.id, initialProduct?.vendeur_id, user?.id, startConversation]);
 
-  const loadMessages = async (convId) => {
+  const loadMessages = useCallback(async (convId) => {
     try {
       const { data, error } = await supabase
         .from("messages")
@@ -185,30 +188,52 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     } catch (err) {
       console.warn("Chargement messages:", err.message);
     }
-  };
+  }, []);
 
-  const markPeerMessagesRead = async (convId) => {
+  const markPeerMessagesRead = useCallback(async (convId) => {
     if (!user?.id || !convId) return;
-    await supabase
-      .from("messages")
-      .update({ is_read: true })
-      .eq("conversation_id", convId)
-      .neq("sender_id", user.id)
-      .eq("is_read", false)
-      .then(({ error }) => {
-        if (error) console.warn("mark read:", error.message);
-      });
-  };
+    try {
+      await supabase
+        .from("messages")
+        .update({ is_read: true })
+        .eq("conversation_id", convId)
+        .neq("sender_id", user.id)
+        .eq("is_read", false);
+    } catch (err) {
+      console.warn("mark read:", err.message);
+    }
+  }, [user?.id]);
 
-  const markBroadcastsRead = async () => {
+  const markBroadcastsRead = useCallback(async () => {
     if (!user?.id || !broadcasts.length) return;
     const rows = broadcasts.map((b) => ({ broadcast_id: b.id, user_id: user.id }));
-    await supabase.from("yorix_broadcast_reads").upsert(rows, { onConflict: "broadcast_id,user_id" }).catch(() => {});
-  };
+    try {
+      await supabase
+        .from("yorix_broadcast_reads")
+        .upsert(rows, { onConflict: "broadcast_id,user_id" });
+    } catch {
+      /* table optionnelle */
+    }
+  }, [user?.id, broadcasts]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    loadConversations();
+    loadBroadcasts();
+  }, [user?.id, loadConversations, loadBroadcasts]);
+
+  useEffect(() => {
+    if (!activeId || activeId === YORIX_TEAM_CHANNEL) {
+      if (activeId !== YORIX_TEAM_CHANNEL) setMessages([]);
+      return;
+    }
+    loadMessages(activeId);
+    markPeerMessagesRead(activeId);
+  }, [activeId, user?.id, loadMessages, markPeerMessagesRead]);
 
   useEffect(() => {
     if (activeId === YORIX_TEAM_CHANNEL) markBroadcastsRead();
-  }, [activeId, broadcasts.length, user?.id]);
+  }, [activeId, broadcasts.length, user?.id, markBroadcastsRead]);
 
   useEffect(() => {
     if (!activeId || activeId === YORIX_TEAM_CHANNEL) return;
@@ -216,31 +241,48 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       .channel(`chat-${activeId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${activeId}`,
+        },
         (payload) => {
           setMessages((prev) => {
             if (prev.some((m) => m.id === payload.new.id)) return prev;
             return [...prev, payload.new];
           });
           if (payload.new.sender_id !== user.id) {
-            supabase.from("messages").update({ is_read: true }).eq("id", payload.new.id).then(() => {});
+            supabase
+              .from("messages")
+              .update({ is_read: true })
+              .eq("id", payload.new.id)
+              .then(() => {});
           }
           loadConversations();
-        }
+        },
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [activeId, user?.id]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeId, user?.id, loadConversations]);
 
   useEffect(() => {
     const ch = supabase
       .channel("yorix-broadcasts")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "yorix_broadcasts" }, () => {
-        loadBroadcasts();
-      })
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "yorix_broadcasts" },
+        () => {
+          loadBroadcasts();
+        },
+      )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [loadBroadcasts]);
 
   const scrollToBottom = useCallback((smooth = true) => {
     const el = scrollRef.current;
@@ -279,10 +321,13 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
 
   const getOtherUserId = (conv) => (conv.user1_id === user.id ? conv.user2_id : conv.user1_id);
 
-  const partnerLabel = (conv) => {
-    const oid = getOtherUserId(conv);
-    return publicDisplayName(profiles[oid], oid);
-  };
+  const partnerLabel = useCallback(
+    (conv) => {
+      const oid = getOtherUserId(conv);
+      return publicDisplayName(profiles[oid], oid);
+    },
+    [profiles, user?.id],
+  );
 
   const filteredConversations = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -293,7 +338,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       const prodName = (prod?.name_fr || "").toLowerCase();
       return label.includes(q) || prodName.includes(q);
     });
-  }, [conversations, search, profiles, products, user?.id]);
+  }, [conversations, search, products, partnerLabel]);
 
   const yorixThreadMessages = useMemo(
     () =>
@@ -306,7 +351,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
         created_at: b.created_at,
         is_system: true,
       })),
-    [broadcasts]
+    [broadcasts],
   );
 
   const displayMessages = activeId === YORIX_TEAM_CHANNEL ? yorixThreadMessages : messages;
@@ -336,7 +381,10 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     const text = messageInput.trim();
     const hasImage = Boolean(pendingImage);
     const link = safeHttpsUrl(pendingLink);
-    if ((!text && !hasImage && !link) || !activeId || activeId === YORIX_TEAM_CHANNEL || sending) return;
+
+    if ((!text && !hasImage && !link) || !activeId || activeId === YORIX_TEAM_CHANNEL || sending) {
+      return;
+    }
 
     if (!user?.id) {
       showToast("Session expirée — reconnectez-vous.", "error");
@@ -355,11 +403,16 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
         );
         setTimeout(() => setBlocked(false), 8000);
         if (user) {
-          supabase.from("fraud_logs").insert({
-            type: "tentative_contournement_chat",
-            user_id: user.id,
-            message: text,
-          }).then(({ error }) => { if (error) console.warn(error.message); });
+          supabase
+            .from("fraud_logs")
+            .insert({
+              type: "tentative_contournement_chat",
+              user_id: user.id,
+              message: text,
+            })
+            .then(({ error }) => {
+              if (error) console.warn(error.message);
+            });
         }
         return;
       }
@@ -389,7 +442,8 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     }
 
     setSending(true);
-    setFeedback(null);
+    clearToast();
+
     try {
       const data = await insertChatMessage(supabase, {
         conversationId: activeId,
@@ -413,12 +467,17 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       console.warn("sendMessage:", err.message);
       const msg = err.message || "erreur réseau";
       if (/expediteur_id|category.*notifications/i.test(msg)) {
-        showToast("Erreur serveur — exécutez la migration SQL notifications sur Supabase.", "error", 6000);
+        showToast(
+          "Erreur serveur — exécutez la migration SQL notifications sur Supabase.",
+          "error",
+          6000,
+        );
       } else {
         showToast(`Message non envoyé : ${msg}`, "error");
       }
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   const selectChannel = (id) => {
@@ -454,14 +513,19 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
   return (
     <div className={hubClass}>
       <YorixToast toast={toast} onClose={clearToast} />
-      <aside className={`msg-hub-sidebar${mobileShowThread ? " msg-hub-sidebar--hidden-mobile" : ""}`}>
+      <aside
+        className={`msg-hub-sidebar${mobileShowThread ? " msg-hub-sidebar--hidden-mobile" : ""}`}
+      >
         <div className="msg-hub-toolbar">
           <div className="msg-hub-title-row">
             <h2 className="msg-hub-title">Messages</h2>
             <button
               type="button"
               className="msg-hub-new-btn"
-              onClick={() => { setShowNewMessage(true); hapticTap(); }}
+              onClick={() => {
+                setShowNewMessage(true);
+                hapticTap();
+              }}
               aria-label="Nouveau message"
             >
               + Nouveau
@@ -500,8 +564,14 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
           ) : filteredConversations.length === 0 ? (
             <div className="msg-hub-empty-inline">
               <p>Aucune conversation privée.</p>
-              <p className="msg-hub-hint">Utilisez « + Nouveau » ou contactez un vendeur depuis une fiche produit.</p>
-              <button type="button" className="msg-hub-new-btn msg-hub-new-btn--inline" onClick={() => setShowNewMessage(true)}>
+              <p className="msg-hub-hint">
+                Utilisez « + Nouveau » ou contactez un vendeur depuis une fiche produit.
+              </p>
+              <button
+                type="button"
+                className="msg-hub-new-btn msg-hub-new-btn--inline"
+                onClick={() => setShowNewMessage(true)}
+              >
                 + Nouveau message
               </button>
             </div>
@@ -513,9 +583,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
                 className={`msg-conv-item${activeId === c.id ? " msg-conv-item--active" : ""}`}
                 onClick={() => selectChannel(c.id)}
               >
-                <div className="msg-conv-av">
-                  {(partnerLabel(c)[0] || "M").toUpperCase()}
-                </div>
+                <div className="msg-conv-av">{(partnerLabel(c)[0] || "M").toUpperCase()}</div>
                 <div className="msg-conv-copy">
                   <div className="msg-conv-name">{partnerLabel(c)}</div>
                   <div className="msg-conv-preview">
@@ -537,12 +605,16 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
         </div>
       </aside>
 
-      <section className={`msg-hub-main${!mobileShowThread && !activeId ? " msg-hub-main--placeholder" : ""}`}>
+      <section
+        className={`msg-hub-main${!mobileShowThread && !activeId ? " msg-hub-main--placeholder" : ""}`}
+      >
         <header className="msg-hub-header">
           <button
             type="button"
             className="msg-hub-back"
-            onClick={() => { setMobileShowThread(false); }}
+            onClick={() => {
+              setMobileShowThread(false);
+            }}
             aria-label="Retour"
           >
             ←
@@ -655,7 +727,12 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
                 {pendingImage && (
                   <div className="msg-composer-preview">
                     <img src={pendingImage} alt="Aperçu" loading="lazy" />
-                    <button type="button" className="msg-composer-preview-remove" onClick={() => setPendingImage("")} aria-label="Retirer l'image">
+                    <button
+                      type="button"
+                      className="msg-composer-preview-remove"
+                      onClick={() => setPendingImage("")}
+                      aria-label="Retirer l'image"
+                    >
                       ×
                     </button>
                   </div>
@@ -663,7 +740,11 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
                 {pendingLink && (
                   <span className="msg-attach-chip">
                     🔗 {pendingLink.slice(0, 40)}
-                    <button type="button" onClick={() => setPendingLink("")} aria-label="Retirer le lien">
+                    <button
+                      type="button"
+                      onClick={() => setPendingLink("")}
+                      aria-label="Retirer le lien"
+                    >
                       ×
                     </button>
                   </span>
@@ -695,7 +776,12 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
                 placeholder="Écrivez votre message…"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
                 disabled={sending}
                 aria-label="Message"
                 enterKeyHint="send"
@@ -704,14 +790,14 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
                 type="button"
                 className="msg-composer-send"
                 onClick={sendMessage}
-                disabled={sending || uploading || (!messageInput.trim() && !pendingImage && !safeHttpsUrl(pendingLink))}
+                disabled={
+                  sending ||
+                  uploading ||
+                  (!messageInput.trim() && !pendingImage && !safeHttpsUrl(pendingLink))
+                }
                 aria-label={sending ? "Envoi en cours" : "Envoyer"}
               >
-                {sending ? (
-                  <span className="msg-composer-spinner" aria-hidden />
-                ) : (
-                  "➤"
-                )}
+                {sending ? <span className="msg-composer-spinner" aria-hidden /> : "➤"}
               </button>
             </div>
           </footer>
