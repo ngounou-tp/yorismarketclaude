@@ -383,6 +383,7 @@ export function NotificationBell({
       width: 100%; box-sizing: border-box; border-radius: 12px; cursor: pointer;
       transition: background .2s ease, transform .12s ease; position: relative;
       margin-bottom: 6px; border: 1px solid transparent;
+      overflow: hidden; max-width: 100%;
     }
     .ybell-item:hover { background: var(--surface2); }
     .ybell-item:active { transform: scale(0.99); }

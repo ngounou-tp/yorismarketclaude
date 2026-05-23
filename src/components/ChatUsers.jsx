@@ -4,9 +4,12 @@ import { supabase } from "../lib/supabase";
 import { uploadSingleImage } from "../utils/helpers";
 import { filtrerMsg, publicDisplayName, adminContactLines } from "../lib/chatSecurity";
 import { insertChatMessage } from "../lib/chatMessages";
+import { findOrCreateConversation } from "../lib/chatConversations";
 import { canWriteAdmin } from "../lib/roles";
 import { CHAT_CONVERSATIONS_LIMIT, CHAT_MESSAGES_LIMIT } from "../lib/queryLimits";
 import { ChatMessageBody } from "./ChatMessageBody";
+import { NewMessagePanel } from "./chat/NewMessagePanel";
+import { YorixToast, useYorixToast } from "./ui/YorixToast";
 
 export const YORIX_TEAM_CHANNEL = "__yorix_team__";
 
@@ -49,14 +52,12 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
   const [blockReason, setBlockReason] = useState("");
   const [search, setSearch] = useState("");
   const [mobileShowThread, setMobileShowThread] = useState(false);
-  const [feedback, setFeedback] = useState(null);
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const { toast, showToast, clearToast } = useYorixToast();
   const messagesEndRef = useRef(null);
+  const scrollRef = useRef(null);
+  const composeInputRef = useRef(null);
   const fileRef = useRef(null);
-
-  const showFeedback = useCallback((msg, type = "error") => {
-    setFeedback({ msg, type });
-    setTimeout(() => setFeedback(null), 4500);
-  }, []);
 
   const hapticTap = () => {
     try {
@@ -69,34 +70,18 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
   const startConversation = useCallback(async (targetUserId, productId = null) => {
     if (!user?.id || !targetUserId || user.id === targetUserId) return;
 
-    const [u1, u2] = user.id < targetUserId ? [user.id, targetUserId] : [targetUserId, user.id];
-
     try {
-      let query = supabase.from("conversations").select("*").eq("user1_id", u1).eq("user2_id", u2);
-      if (productId) query = query.eq("product_id", productId);
-      else query = query.is("product_id", null);
-
-      const { data: existing } = await query.maybeSingle();
-      if (existing) {
-        setActiveId(existing.id);
-        setMobileShowThread(true);
-        return;
-      }
-
-      const { data: created, error } = await supabase
-        .from("conversations")
-        .insert({ user1_id: u1, user2_id: u2, product_id: productId })
-        .select()
-        .single();
-      if (error) throw error;
-      setActiveId(created.id);
+      const conv = await findOrCreateConversation(supabase, user.id, targetUserId, productId);
+      setShowNewMessage(false);
+      setActiveId(conv.id);
       setMobileShowThread(true);
       await loadConversations();
+      setTimeout(() => composeInputRef.current?.focus(), 120);
     } catch (err) {
       console.error("startConversation:", err);
-      showFeedback("Erreur : " + err.message);
+      showToast(err.message || "Impossible d'ouvrir la conversation", "error");
     }
-  }, [user?.id, showFeedback]);
+  }, [user?.id, showToast]);
 
   useEffect(() => {
     if (initialProduct?.vendeur_id && user?.id && initialProduct.vendeur_id !== user.id) {
@@ -257,9 +242,40 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+    }
+  }, []);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, activeId, broadcasts]);
+    scrollToBottom(true);
+  }, [messages, activeId, broadcasts, scrollToBottom]);
+
+  useEffect(() => {
+    if (!activeId || activeId === YORIX_TEAM_CHANNEL) return;
+    setTimeout(() => composeInputRef.current?.focus(), 150);
+  }, [activeId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return undefined;
+    const vv = window.visualViewport;
+    const syncKb = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--msg-kb-offset", `${offset}px`);
+    };
+    vv.addEventListener("resize", syncKb);
+    vv.addEventListener("scroll", syncKb);
+    syncKb();
+    return () => {
+      vv.removeEventListener("resize", syncKb);
+      vv.removeEventListener("scroll", syncKb);
+      document.documentElement.style.removeProperty("--msg-kb-offset");
+    };
+  }, []);
 
   const getOtherUserId = (conv) => (conv.user1_id === user.id ? conv.user2_id : conv.user1_id);
 
@@ -303,14 +319,14 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      showFeedback("Image max 5 Mo");
+      showToast("Image max 5 Mo", "error");
       return;
     }
     setUploading(true);
     try {
       setPendingImage(await uploadSingleImage(file));
     } catch (err) {
-      showFeedback(err.message || "Échec upload");
+      showToast(err.message || "Échec upload", "error");
     }
     setUploading(false);
     e.target.value = "";
@@ -323,7 +339,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     if ((!text && !hasImage && !link) || !activeId || activeId === YORIX_TEAM_CHANNEL || sending) return;
 
     if (!user?.id) {
-      showFeedback("Session expirée — reconnectez-vous.");
+      showToast("Session expirée — reconnectez-vous.", "error");
       return;
     }
 
@@ -371,11 +387,15 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
         .update({ last_message_at: new Date().toISOString() })
         .eq("id", activeId);
       loadConversations();
+      scrollToBottom(true);
     } catch (err) {
       console.warn("sendMessage:", err.message);
-      showFeedback(err.message?.includes("expediteur_id")
-        ? "Erreur serveur chat — relancez l’app après mise à jour."
-        : `Message non envoyé : ${err.message || "erreur réseau"}`);
+      const msg = err.message || "erreur réseau";
+      if (/expediteur_id|category.*notifications/i.test(msg)) {
+        showToast("Erreur serveur — exécutez la migration SQL notifications sur Supabase.", "error", 6000);
+      } else {
+        showToast(`Message non envoyé : ${msg}`, "error");
+      }
     }
     setSending(false);
   };
@@ -396,13 +416,34 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
 
   const hubClass = `msg-hub${isModal ? " msg-hub--modal" : ""}${mobileShowThread ? " msg-hub--thread-open" : ""}`;
 
+  const handleNewMessagePick = (profile) => {
+    if (profile?.id) startConversation(profile.id, null);
+  };
+
   return (
     <div className={hubClass}>
+      <YorixToast toast={toast} onClose={clearToast} />
       <aside className={`msg-hub-sidebar${mobileShowThread ? " msg-hub-sidebar--hidden-mobile" : ""}`}>
         <div className="msg-hub-toolbar">
           <div className="msg-hub-title-row">
             <h2 className="msg-hub-title">Messages</h2>
+            <button
+              type="button"
+              className="msg-hub-new-btn"
+              onClick={() => { setShowNewMessage(true); hapticTap(); }}
+              aria-label="Nouveau message"
+            >
+              + Nouveau
+            </button>
           </div>
+          {showNewMessage ? (
+            <NewMessagePanel
+              supabase={supabase}
+              userId={user.id}
+              onSelect={handleNewMessagePick}
+              onClose={() => setShowNewMessage(false)}
+            />
+          ) : (
           <input
             type="search"
             className="msg-hub-search"
@@ -411,6 +452,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Rechercher"
           />
+          )}
         </div>
 
         <div className="msg-hub-conv-list">
@@ -436,7 +478,10 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
           ) : filteredConversations.length === 0 ? (
             <div className="msg-hub-empty-inline">
               <p>Aucune conversation privée.</p>
-              <p className="msg-hub-hint">Contactez un vendeur depuis une fiche produit.</p>
+              <p className="msg-hub-hint">Utilisez « + Nouveau » ou contactez un vendeur depuis une fiche produit.</p>
+              <button type="button" className="msg-hub-new-btn msg-hub-new-btn--inline" onClick={() => setShowNewMessage(true)}>
+                + Nouveau message
+              </button>
             </div>
           ) : (
             filteredConversations.map((c) => (
@@ -512,7 +557,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
           </div>
         )}
 
-        <div className="msg-hub-scroll">
+        <div className="msg-hub-scroll" ref={scrollRef}>
           {!activeId ? (
             <div className="msg-hub-empty">
               <div className="msg-hub-empty-icon">💬</div>
@@ -577,11 +622,6 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
               <p className="msg-blocked-hint">Utilisez la messagerie Yorix pour vos échanges commerciaux.</p>
             </div>
           )}
-          {feedback && (
-            <div className={`msg-feedback msg-feedback--${feedback.type}`} role="alert">
-              {feedback.msg}
-            </div>
-          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -626,6 +666,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
                 onChange={(e) => setPendingLink(e.target.value)}
               />
               <input
+                ref={composeInputRef}
                 type="text"
                 className="msg-composer-input"
                 placeholder="Écrivez votre message…"
@@ -633,14 +674,21 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                 disabled={sending}
+                aria-label="Message"
+                enterKeyHint="send"
               />
               <button
                 type="button"
                 className="msg-composer-send"
                 onClick={sendMessage}
                 disabled={sending || uploading || (!messageInput.trim() && !pendingImage && !safeHttpsUrl(pendingLink))}
+                aria-label={sending ? "Envoi en cours" : "Envoyer"}
               >
-                {sending ? "…" : "➤"}
+                {sending ? (
+                  <span className="msg-composer-spinner" aria-hidden />
+                ) : (
+                  "➤"
+                )}
               </button>
             </div>
           </footer>

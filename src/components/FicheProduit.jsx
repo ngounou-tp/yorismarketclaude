@@ -10,7 +10,7 @@ import { TrustStrip } from "./conversion/TrustStrip";
 import { ShareWhatsAppButton } from "./conversion/ShareWhatsAppButton";
 import { SocialProofLine } from "./conversion/SocialProofLine";
 import { isPurchasable } from "../lib/stockStatus";
-import { effectiveProductPrice, isPromoActive, productPromoListPrice } from "../lib/productPricing";
+import { YorixToast, useYorixToast } from "./ui/YorixToast";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : FICHE PRODUIT DÉTAIL
@@ -22,6 +22,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
   const [avis, setAvis]                     = useState([]);
   const [showCmdModal, setShowCmdModal]     = useState(false);
   const [showChatModal, setShowChatModal]   = useState(false);
+  const { toast, showToast, clearToast } = useYorixToast();
 
   const parseImageUrls = (val) => {
     if (!val) return [];
@@ -89,15 +90,15 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
 
   const handleContactClick = () => {
     if (!user) {
-      alert("Connectez-vous pour contacter le vendeur.");
+      showToast("Connectez-vous pour contacter le vendeur.", "error");
       return;
     }
     if (!product.vendeur_id) {
-      alert("Ce vendeur n'est pas disponible pour le chat.");
+      showToast("Ce vendeur n'est pas disponible pour le chat.", "error");
       return;
     }
     if (user.id === product.vendeur_id) {
-      alert("C'est votre propre produit !");
+      showToast("C'est votre propre produit !", "info");
       return;
     }
     setShowChatModal(true);
@@ -105,6 +106,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 40 }}>
+      <YorixToast toast={toast} onClose={clearToast} />
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "16px" }}>
         <button
           onClick={onClose}

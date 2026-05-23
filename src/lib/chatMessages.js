@@ -36,7 +36,15 @@ export async function insertChatMessage(supabase, { conversationId, senderId, co
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    const msg = error.message || String(error);
+    if (/category.*notifications|expediteur_id/i.test(msg)) {
+      throw new Error(
+        "Configuration serveur incomplète (notifications). Contactez le support ou appliquez la migration SQL."
+      );
+    }
+    throw error;
+  }
   return data;
 }
 
