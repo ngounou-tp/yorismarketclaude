@@ -112,6 +112,8 @@ export function YorixPages({ ctx }) {
     goAcademyContact,
     dashTab,
     setDashTab,
+    pendingChatConversationId,
+    setPendingChatConversationId,
     getDashNav,
     roleChipClass,
     doLogout,
@@ -464,7 +466,11 @@ export function YorixPages({ ctx }) {
                   <div className="info-msg">
                     🔐 Messagerie sécurisée Yorix — téléphones et e-mails masqués entre membres. Photos et liens https autorisés. Canal officiel « Yorix Équipe » pour les annonces.
                   </div>
-                  <ChatUsers user={user} userData={userData} />
+                  <ChatUsers
+                    user={user}
+                    userData={userData}
+                    initialConversationId={pendingChatConversationId}
+                  />
                 </>
               )}
               {dashTab !== "messages" && userRole === "seller" && (

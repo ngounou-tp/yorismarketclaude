@@ -40,7 +40,14 @@ function messagePreview(m) {
   return t ? t.slice(0, 60) : "Message";
 }
 
-export function ChatUsers({ user, userData, initialProduct = null, onClose, isModal = false }) {
+export function ChatUsers({
+  user,
+  userData,
+  initialProduct = null,
+  initialConversationId = null,
+  onClose,
+  isModal = false,
+}) {
   const isAdmin = canWriteAdmin(userData);
   const revealPII = isAdmin;
 
@@ -61,6 +68,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
   const [search, setSearch] = useState("");
   const [mobileShowThread, setMobileShowThread] = useState(false);
   const [showNewMessage, setShowNewMessage] = useState(false);
+  const [pendingConvId, setPendingConvId] = useState(initialConversationId);
   const { toast, showToast, clearToast } = useYorixToast();
   const messagesEndRef = useRef(null);
   const scrollRef = useRef(null);
@@ -101,8 +109,8 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
 
     if (productIds.length) {
       const { data: prods } = await supabase
-        .from("produits")
-        .select("id, name_fr, prix, image")
+        .from("products")
+        .select("id, name_fr, prix, image, image_urls")
         .in("id", productIds);
       setProducts((prev) => {
         const next = { ...prev };
@@ -193,15 +201,58 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     }
   }, []);
 
+  useEffect(() => {
+    setPendingConvId(initialConversationId);
+  }, [initialConversationId]);
+
+  useEffect(() => {
+    if (!pendingConvId || !user?.id) return;
+
+    const openConv = (conv) => {
+      if (!conv?.id) return;
+      setActiveId(conv.id);
+      setMobileShowThread(true);
+      setPendingConvId(null);
+    };
+
+    const hit = conversations.find((c) => c.id === pendingConvId);
+    if (hit) {
+      openConv(hit);
+      return;
+    }
+
+    if (loading) return;
+
+    supabase
+      .from("conversations")
+      .select("*")
+      .eq("id", pendingConvId)
+      .maybeSingle()
+      .then(async ({ data, error }) => {
+        if (error || !data) {
+          setPendingConvId(null);
+          return;
+        }
+        setConversations((prev) => (prev.some((c) => c.id === data.id) ? prev : [data, ...prev]));
+        await hydrateProfilesAndProducts([data]);
+        openConv(data);
+      });
+  }, [pendingConvId, conversations, loading, user?.id, hydrateProfilesAndProducts]);
+
   const markPeerMessagesRead = useCallback(async (convId) => {
     if (!user?.id || !convId) return;
     try {
-      await supabase
-        .from("messages")
-        .update({ is_read: true })
-        .eq("conversation_id", convId)
-        .neq("sender_id", user.id)
-        .eq("is_read", false);
+      const { error } = await supabase.rpc("mark_conversation_messages_read", {
+        p_conversation_id: convId,
+      });
+      if (error) {
+        await supabase
+          .from("messages")
+          .update({ is_read: true })
+          .eq("conversation_id", convId)
+          .neq("sender_id", user.id)
+          .eq("is_read", false);
+      }
     } catch (err) {
       console.warn("mark read:", err.message);
     }
@@ -256,11 +307,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
             return [...prev, payload.new];
           });
           if (payload.new.sender_id !== user.id) {
-            supabase
-              .from("messages")
-              .update({ is_read: true })
-              .eq("id", payload.new.id)
-              .then(() => {});
+            markPeerMessagesRead(activeId);
           }
           loadConversations();
         },
@@ -269,7 +316,7 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeId, user?.id, loadConversations]);
+  }, [activeId, user?.id, loadConversations, markPeerMessagesRead]);
 
   useEffect(() => {
     const ch = supabase

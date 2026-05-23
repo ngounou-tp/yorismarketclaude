@@ -50,6 +50,7 @@ export function NewMessageModal({ open, supabase, userId, onSelect, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retryTick, setRetryTick] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
   const reqIdRef = useRef(0);

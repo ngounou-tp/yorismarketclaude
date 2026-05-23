@@ -64,8 +64,6 @@ import {
 
 import {
   uploadSingleImage,
-  filtrerMsg,
-  CHAT_ESCROW_GUIDANCE,
   updateLivraisonStatut,
   genererCodeSuivi,
 } from "./utils/helpers";
@@ -132,6 +130,7 @@ export default function YorixApp() {
   );
 
   const [dashTab, setDashTab] = useState("overview");
+  const [pendingChatConversationId, setPendingChatConversationId] = useState(null);
   const [demandeLivraisonOpen, setDemandeLivraisonOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -276,6 +275,12 @@ export default function YorixApp() {
     setCartDrawerOpen(false);
     setUserMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (page !== "dashboard") return;
+    const tab = new URLSearchParams(location.search).get("tab");
+    if (tab && tab !== dashTab) setDashTab(tab);
+  }, [page, location.search, dashTab]);
 
   const goToCategory = useCallback(
     ({ parentSlug, subSlug }) => {
@@ -518,11 +523,6 @@ export default function YorixApp() {
     setInscriptionLoading(false);
   };
 
-  const [chatMessages, setChatMessages] = useState([{ text:"Bonjour ! Comment puis-je vous aider ?", me:false, time:"10:02" }]);
-  const [chatMsg, setChatMsg]           = useState("");
-  const [chatBlocked, setChatBlocked]   = useState(false);
-  const chatEndRef = useRef(null);
-
   // ── ONBOARDING : afficher au 1er chargement si jamais vu ──
   useEffect(() => {
     const seen = localStorage.getItem("yorix_onboarding_seen");
@@ -665,7 +665,6 @@ export default function YorixApp() {
     return () => supabase.removeChannel(channel);
   }, []);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [chatMessages]);
 
   const routePath = location.pathname;
 
@@ -816,30 +815,6 @@ export default function YorixApp() {
     setUserData((prev) => (prev ? { ...prev, ...payload } : prev));
   }, [user?.id]);
 
-  // ── CHAT ──
-  const sendChat = async () => {
-    if (!chatMsg.trim()) return;
-    const filtre = filtrerMsg(chatMsg);
-    const now = new Date();
-    const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
-    if (filtre.bloque) {
-      setChatBlocked(true);
-      setTimeout(() => setChatBlocked(false), 8000);
-      if (user) await supabase.from("fraud_logs").insert({ type:"tentative_contournement", user_id:user.id, message:chatMsg }).catch(e => console.warn(e?.message));
-      setChatMsg("");
-      setChatMessages(prev => [...prev, {
-        text: `🛡️ ${filtre.raison || "Contact personnel interdit."} ${CHAT_ESCROW_GUIDANCE}`,
-        me: false,
-        time,
-        system: true,
-      }]);
-      return;
-    }
-    // Widget support local (pas d'insert messages — schéma peer sender_id + conversation uuid)
-    setChatMessages(prev => [...prev, { text:chatMsg, me:true, time }]);
-    setChatMsg("");
-    setTimeout(() => setChatMessages(prev => [...prev, { text:"Merci ! Un conseiller Yorix vous répond dans quelques minutes. ⚡", me:false, time }]), 1200);
-  };
 
   const toggleWish = useCallback((id) => setWishlist(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; }), []);
 
@@ -847,7 +822,12 @@ export default function YorixApp() {
     (notification) => {
       if (!notification) return false;
       const action = getNotificationOpenAction(notification, route.locale);
-      return applyNotificationOpen(action, { navigate, goPage, setDashTab });
+      return applyNotificationOpen(action, {
+        navigate,
+        goPage,
+        setDashTab,
+        setPendingChatConversationId,
+      });
     },
     [navigate, route.locale, goPage, setDashTab],
   );
@@ -1659,6 +1639,8 @@ export default function YorixApp() {
     goAcademyContact,
     dashTab,
     setDashTab,
+    pendingChatConversationId,
+    setPendingChatConversationId,
     getDashNav,
     roleChipClass,
     doLogout,
