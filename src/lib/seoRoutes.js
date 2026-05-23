@@ -566,3 +566,43 @@ export function buildHrefLangAlternates(pathname) {
   ];
 }
 
+/**
+ * Chemin interne avec query string (ex. /fr/livraison?code=YX-123).
+ * @param {string} page
+ * @param {{ locale?: SiteLocale, query?: Record<string, string|number|null|undefined> }} [opts]
+ */
+export function pathForPageWithQuery(page, { locale = DEFAULT_SITE_LOCALE, query = {} } = {}) {
+  const base = pathForPage(page, { locale });
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value != null && value !== "") params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+/** URL absolue sur le domaine public (WhatsApp, emails). */
+export function absoluteSiteUrl(pathWithSearch = "/") {
+  const base = SITE_URL.replace(/\/$/, "");
+  const path = pathWithSearch.startsWith("/") ? pathWithSearch : `/${pathWithSearch}`;
+  return `${base}${path}`;
+}
+
+/** Suivi livraison client — /fr/livraison?code=… */
+export function deliveryTrackingPath(code, locale = DEFAULT_SITE_LOCALE) {
+  return pathForPageWithQuery("livraison", { locale, query: code ? { code } : {} });
+}
+
+/** Dashboard livreur — missions disponibles. */
+export function livreurDashboardPath({ code, locale = DEFAULT_SITE_LOCALE } = {}) {
+  return pathForPageWithQuery("dashboard", {
+    locale,
+    query: { tab: "disponibles", ...(code ? { code } : {}) },
+  });
+}
+
+/** Admin — onglet livraisons. */
+export function adminDeliveriesPath(locale = DEFAULT_SITE_LOCALE) {
+  return pathForPageWithQuery("admin", { locale, query: { tab: "deliveries" } });
+}
+

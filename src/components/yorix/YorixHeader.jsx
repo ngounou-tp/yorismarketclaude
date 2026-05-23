@@ -29,6 +29,7 @@ export function YorixHeader({
   onOpenNotification,
   onMarkNotifRead,
   totalQty,
+  openCart,
   setAuthTab,
   setAuthOpen,
   setSelectedRole,
@@ -227,7 +228,7 @@ export function YorixHeader({
             />
           )}
 
-          <button type="button" className="icon-btn" onClick={() => goPage("cart")} title={t("actions.cart")}>
+          <button type="button" className="icon-btn" onClick={openCart} title={t("actions.cart")}>
             🛒
             {totalQty > 0 && <span className="ibadge">{totalQty}</span>}
           </button>

@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { YORIX_WA_NUMBER } from "../lib/supabase";
 import { CITIES } from "../lib/constants";
+import { deliveryTrackingPath } from "../lib/seoRoutes";
 import { creerDemandeLivraison } from "../utils/deliveryWorkflow";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : MODAL DEMANDE DE LIVRAISON
 // ─────────────────────────────────────────────────────────────
-export function ModalDemandeLivraison({ user, userData, onClose, onSuccess }) {
+export function ModalDemandeLivraison({ user, userData, siteLocale = "fr", onClose, onSuccess }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     nom:               userData?.nom || "",
@@ -179,7 +180,7 @@ export function ModalDemandeLivraison({ user, userData, onClose, onSuccess }) {
             <button
               onClick={() => {
                 onClose();
-                window.location.href = "/?page=livraison&code=" + codeGenere;
+                window.location.href = deliveryTrackingPath(codeGenere, siteLocale);
               }}
               style={{
                 background: "var(--green)", color: "#fff", border: "none",

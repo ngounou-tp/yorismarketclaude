@@ -75,6 +75,7 @@ import { ModalCommander } from "./components/ModalCommander";
 import { LevelBadge } from "./components/LevelBadge";
 import { PointsAnimation } from "./components/PointsAnimation";
 import { ModalDemandeLivraison } from "./components/ModalDemandeLivraison";
+import { CartDrawer } from "./components/CartDrawer";
 import { getDefaultPolicyFromEnv, normalizeDeliveryPolicy } from "./domain/deliveryPolicy";
 import { enrichNotification, showBrowserNotificationIfPossible } from "./domain/notificationsDomain";
 import { applyNotificationOpen, getNotificationOpenAction } from "./lib/notificationNavigation.js";
@@ -130,6 +131,7 @@ export default function YorixApp() {
 
   const [dashTab, setDashTab] = useState("overview");
   const [demandeLivraisonOpen, setDemandeLivraisonOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
 
   const [dark, setDark]           = useState(false);
 
@@ -245,6 +247,20 @@ export default function YorixApp() {
     navigate(pathForPage(p, { ...opts, locale: opts.locale ?? route.locale }));
     window.scrollTo(0, 0);
   }, [navigate, route.locale]);
+
+  const openCart = useCallback(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches) {
+      setCartDrawerOpen(true);
+    } else {
+      goPage("cart");
+    }
+  }, [goPage]);
+
+  const closeCartDrawer = useCallback(() => setCartDrawerOpen(false), []);
+
+  useEffect(() => {
+    setCartDrawerOpen(false);
+  }, [location.pathname]);
 
   const goToCategory = useCallback(
     ({ parentSlug, subSlug }) => {
@@ -905,9 +921,12 @@ export default function YorixApp() {
           (page === "seoCity" && route.cityMode === "prestataires")
         );
       }
+      if (tabPage === "cart") {
+        return page === "cart" || cartDrawerOpen;
+      }
       return page === tabPage;
     },
-    [page, route.cityMode]
+    [page, route.cityMode, cartDrawerOpen],
   );
 
   const openProductUrl = useCallback(
@@ -1574,6 +1593,9 @@ export default function YorixApp() {
     setWaOpen,
     tabActive,
     unread,
+    openCart,
+    cartDrawerOpen,
+    closeCartDrawer,
   };
 
 
@@ -1628,6 +1650,7 @@ export default function YorixApp() {
         <ModalDemandeLivraison
           user={user}
           userData={userData}
+          siteLocale={route.locale}
           onClose={() => setDemandeLivraisonOpen(false)}
           onSuccess={(code) => {
             console.log("Livraison créée avec code:", code);
@@ -1675,6 +1698,7 @@ export default function YorixApp() {
         onOpenNotification={openNotificationTarget}
         onMarkNotifRead={marquerNotifLue}
         totalQty={totalQty}
+        openCart={openCart}
         setAuthTab={setAuthTab}
         setAuthOpen={setAuthOpen}
         setSelectedRole={setSelectedRole}
@@ -1691,6 +1715,17 @@ export default function YorixApp() {
       <RouteErrorBoundary resetKeys={[page, location.pathname]}>
         <YorixPages ctx={pagesCtx} />
       </RouteErrorBoundary>
+
+      <CartDrawer
+        open={cartDrawerOpen}
+        onClose={closeCartDrawer}
+        cartItems={cartItems}
+        cartSummary={cartSummary}
+        changeQty={changeQty}
+        removeItem={removeItem}
+        goPage={goPage}
+        totalQty={totalQty}
+      />
 
       <PremiumSiteFooter goPage={goPage} freeShippingThresholdXaf={commerceDeliveryPolicy.freeShippingThresholdXaf} />
     </>

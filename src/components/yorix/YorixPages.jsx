@@ -121,6 +121,7 @@ export function YorixPages({ ctx }) {
     setWaOpen,
     tabActive,
     unread,
+    openCart,
   } = ctx;
 
   return (
@@ -586,6 +587,7 @@ export function YorixPages({ ctx }) {
           {[
             { icon: "🏠", label: "Accueil", p: "home" },
             { icon: "🛍️", label: "Produits", p: "produits" },
+            { icon: "🛒", label: "Panier", p: "cart", drawer: true },
             { icon: "🚚", label: "Livraison", p: "livraison" },
             { icon: "📊", label: "Mon espace", p: "dashboard" },
             { icon: "💬", label: "WhatsApp", p: "wa" },
@@ -602,6 +604,8 @@ export function YorixPages({ ctx }) {
                 } else if (item.p === "dashboard" && !user) {
                   setAuthTab("register");
                   setAuthOpen(true);
+                } else if (item.drawer) {
+                  openCart();
                 } else {
                   goPage(item.p);
                 }
@@ -609,6 +613,7 @@ export function YorixPages({ ctx }) {
             >
               <div className="mn-icon">{item.icon}</div>
               <div className="mn-label">{item.label}</div>
+              {item.p === "cart" && totalQty > 0 && <div className="mn-badge">{totalQty}</div>}
               {item.p === "dashboard" && !user && (
                 <div
                   style={{

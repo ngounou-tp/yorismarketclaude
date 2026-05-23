@@ -118,7 +118,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
           ← Retour
         </button>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
+        <div className="fiche-produit-grid">
 
           {/* COLONNE GAUCHE : IMAGES */}
           {images.length > 0 ? (

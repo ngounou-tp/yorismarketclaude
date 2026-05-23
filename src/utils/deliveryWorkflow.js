@@ -11,6 +11,12 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { supabase, YORIX_WA_NUMBER } from "../lib/supabase";
+import {
+  absoluteSiteUrl,
+  adminDeliveriesPath,
+  deliveryTrackingPath,
+  livreurDashboardPath,
+} from "../lib/seoRoutes";
 import { publishInAppNotification } from "../services/notificationService";
 
 // ─── 1. CATALOGUE OFFICIEL DES STATUTS ──────────────────────────────────────
@@ -120,7 +126,7 @@ function fmtMontant(n) {
 }
 
 export function buildMsgLivreurAssignation(delivery) {
-  const link = `https://yorix.cm/?page=dashboard&tab=disponibles&code=${delivery.code_suivi}`;
+  const link = absoluteSiteUrl(livreurDashboardPath({ code: delivery.code_suivi }));
   return [
     "🚚 *NOUVELLE COURSE YORIX DISPONIBLE*",
     "",
@@ -152,7 +158,7 @@ export function buildMsgLivreurAssignation(delivery) {
 }
 
 export function buildMsgClientAcceptation(delivery) {
-  const link = `https://yorix.cm/?page=livraison&code=${delivery.code_suivi}`;
+  const link = absoluteSiteUrl(deliveryTrackingPath(delivery.code_suivi));
   return [
     "✅ *VOTRE LIVRAISON YORIX EST PRISE EN CHARGE*",
     "",
@@ -201,7 +207,7 @@ export function buildMsgAdminAcceptation(delivery, livreurNom) {
 
 export function buildMsgClientStatusChange(delivery, nouveauStatut) {
   const cfg = getStatutConfig(nouveauStatut);
-  const link = `https://yorix.cm/?page=livraison&code=${delivery.code_suivi}`;
+  const link = absoluteSiteUrl(deliveryTrackingPath(delivery.code_suivi));
   return [
     `${cfg.icon} *Mise à jour de votre livraison Yorix*`,
     "",
@@ -258,7 +264,7 @@ export async function adminAssignerLivreur({ delivery, livreur, acteurId, openWh
       type:    "delivery_assigned",
       title:   "🚚 Nouvelle course Yorix",
       message: `Mission ${newDelivery.code_suivi} : ${newDelivery.adresse_collecte || ""} → ${newDelivery.adresse_livraison || ""}`,
-      link:    `/?page=dashboard&tab=disponibles&code=${newDelivery.code_suivi}`,
+      link:    livreurDashboardPath({ code: newDelivery.code_suivi }),
       payload: { delivery_id: newDelivery.id, code: newDelivery.code_suivi },
     });
   }
@@ -345,7 +351,7 @@ export async function adminChangerStatut({ delivery, nouveauStatut, acteurId, no
         type:    "delivery_status",
         title:   `Livraison ${delivery.code_suivi} : ${getStatutConfig(nouveauStatut).label}`,
         message: `Votre livraison est maintenant : ${getStatutConfig(nouveauStatut).label}.`,
-        link:    `/?page=livraison&code=${delivery.code_suivi}`,
+        link:    deliveryTrackingPath(delivery.code_suivi),
         payload: { delivery_id: delivery.id, statut: nouveauStatut },
       });
     }
@@ -370,7 +376,7 @@ export async function adminAnnulerLivraison({ delivery, motif, acteurId }) {
       type:    "delivery_cancelled",
       title:   "❌ Livraison annulée",
       message: `Votre livraison ${delivery.code_suivi} a été annulée. ${motif ? "Motif : " + motif : ""}`,
-      link:    `/?page=livraison&code=${delivery.code_suivi}`,
+      link:    deliveryTrackingPath(delivery.code_suivi),
       payload: { delivery_id: delivery.id, motif },
     });
   }
@@ -429,7 +435,7 @@ export async function livreurAccepter({ delivery, user, userData }) {
       type:    "delivery_accepted",
       title:   "✅ Votre livraison a un livreur !",
       message: `${updated.livreur_nom || "Votre livreur"} a accepté votre livraison ${updated.code_suivi}.`,
-      link:    `/?page=livraison&code=${updated.code_suivi}`,
+      link:    deliveryTrackingPath(updated.code_suivi),
       payload: { delivery_id: updated.id },
     });
   }
@@ -508,7 +514,7 @@ export async function livreurRefuser({ delivery, user, userData, motif }) {
     type:    "delivery_refused",
     title:   "⚠️ Mission refusée",
     message: `${userData?.nom || "Un livreur"} a refusé la mission ${delivery.code_suivi}. ${motif ? "Motif : " + motif : ""}`,
-    link:    `/?page=admin&tab=deliveries`,
+    link:    adminDeliveriesPath(),
     payload: { delivery_id: delivery.id, motif },
   });
 
@@ -547,7 +553,7 @@ export async function livreurAvancerStatut({ delivery, user, nouveauStatut }) {
       type:    "delivery_status",
       title:   `${getStatutConfig(nouveauStatut).icon} Livraison ${data.code_suivi}`,
       message: getStatutConfig(nouveauStatut).label,
-      link:    `/?page=livraison&code=${data.code_suivi}`,
+      link:    deliveryTrackingPath(data.code_suivi),
       payload: { delivery_id: data.id, statut: nouveauStatut },
     });
   }
@@ -617,7 +623,7 @@ export async function creerDemandeLivraison({
     type:    "delivery_request",
     title:   "🚚 Nouvelle demande de livraison",
     message: `${clientNom || "Client"} → ${adresseLivraison} (${code})`,
-    link:    `/?page=admin&tab=deliveries`,
+    link:    adminDeliveriesPath(),
     payload: { delivery_id: data.id, code },
   });
 

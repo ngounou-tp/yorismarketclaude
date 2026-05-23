@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { ROLE_LABELS, CATS } from "../lib/constants";
+import { deliveryTrackingPath } from "../lib/seoRoutes";
 import {
   isAdminViewer,
   canWriteAdmin,
@@ -1318,7 +1319,7 @@ export function AdminDashboard({ user, userData, goPage }) {
                           </button>
                         )}
 
-                        <button onClick={() => window.open("/?page=livraison&code=" + d.code_suivi, "_blank")}
+                        <button onClick={() => window.open(deliveryTrackingPath(d.code_suivi), "_blank")}
                           style={{ background: "var(--surface2)", color: "var(--ink)", border: "1px solid var(--border)", padding: "7px 12px", borderRadius: 8, fontSize: ".75rem", fontWeight: 600, cursor: "pointer" }}>
                           👁️ Tracker
                         </button>
