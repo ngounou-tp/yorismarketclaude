@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { uploadSingleImage } from "../utils/helpers";
-import { filtrerMsg, publicDisplayName, adminContactLines } from "../lib/chatSecurity";
+import { filtrerMsg, publicDisplayName, adminContactLines, CHAT_ESCROW_GUIDANCE, CHAT_ESCROW_HINT, CHAT_ESCROW_BLOCK_TITLE } from "../lib/chatSecurity";
 import { insertChatMessage } from "../lib/chatMessages";
 import { findOrCreateConversation } from "../lib/chatConversations";
 import { canWriteAdmin } from "../lib/roles";
@@ -348,7 +348,12 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       if (filtre.bloque) {
         setBlocked(true);
         setBlockReason(filtre.raison || "Partage de contact interdit");
-        setTimeout(() => setBlocked(false), 5000);
+        showToast(
+          `${filtre.raison} Restez sur Yorix et payez via la plateforme (escrow) pour une transaction sécurisée.`,
+          "error",
+          7000,
+        );
+        setTimeout(() => setBlocked(false), 8000);
         if (user) {
           supabase.from("fraud_logs").insert({
             type: "tentative_contournement_chat",
@@ -360,7 +365,23 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
       }
     }
 
-    if (pendingLink.trim() && !link) {
+    const linkText = pendingLink.trim();
+    if (linkText) {
+      const linkFilter = filtrerMsg(linkText);
+      if (linkFilter.bloque) {
+        setBlocked(true);
+        setBlockReason(linkFilter.raison || "Lien de contact interdit");
+        showToast(
+          `${linkFilter.raison} Restez sur Yorix et payez via la plateforme (escrow) pour une transaction sécurisée.`,
+          "error",
+          7000,
+        );
+        setTimeout(() => setBlocked(false), 8000);
+        return;
+      }
+    }
+
+    if (linkText && !link) {
       setBlockReason("Seuls les liens https:// sont acceptés.");
       setBlocked(true);
       setTimeout(() => setBlocked(false), 4000);
@@ -617,9 +638,10 @@ export function ChatUsers({ user, userData, initialProduct = null, onClose, isMo
 
           {blocked && (
             <div className="msg-blocked-banner" role="alert">
-              <strong>Message bloqué</strong>
-              <p>{blockReason}</p>
-              <p className="msg-blocked-hint">Utilisez la messagerie Yorix pour vos échanges commerciaux.</p>
+              <strong>🛡️ {CHAT_ESCROW_BLOCK_TITLE}</strong>
+              <p className="msg-blocked-reason">{blockReason}</p>
+              <p className="msg-blocked-body">{CHAT_ESCROW_GUIDANCE}</p>
+              <p className="msg-blocked-hint">{CHAT_ESCROW_HINT}</p>
             </div>
           )}
           <div ref={messagesEndRef} />

@@ -65,6 +65,7 @@ import {
 import {
   uploadSingleImage,
   filtrerMsg,
+  CHAT_ESCROW_GUIDANCE,
   updateLivraisonStatut,
   genererCodeSuivi,
 } from "./utils/helpers";
@@ -822,9 +823,17 @@ export default function YorixApp() {
     const now = new Date();
     const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
     if (filtre.bloque) {
-      setChatBlocked(true); setTimeout(() => setChatBlocked(false), 4000);
+      setChatBlocked(true);
+      setTimeout(() => setChatBlocked(false), 8000);
       if (user) await supabase.from("fraud_logs").insert({ type:"tentative_contournement", user_id:user.id, message:chatMsg }).catch(e => console.warn(e?.message));
-      setChatMsg(""); return;
+      setChatMsg("");
+      setChatMessages(prev => [...prev, {
+        text: `🛡️ ${filtre.raison || "Contact personnel interdit."} ${CHAT_ESCROW_GUIDANCE}`,
+        me: false,
+        time,
+        system: true,
+      }]);
+      return;
     }
     // Widget support local (pas d'insert messages — schéma peer sender_id + conversation uuid)
     setChatMessages(prev => [...prev, { text:chatMsg, me:true, time }]);

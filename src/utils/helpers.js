@@ -147,7 +147,7 @@ export async function getUserProfile(uid) {
 
 export { getUserRole, isAdminFull, isAdminViewer, canWriteAdmin, getProfileRole, ROLE_ADMIN_PARTNER, ADMIN_ROLE_LABELS } from "../lib/roles";
 
-export { filtrerMsg, maskPIIForDisplay } from "../lib/chatSecurity";
+export { filtrerMsg, maskPIIForDisplay, CHAT_ESCROW_GUIDANCE, CHAT_ESCROW_HINT, CHAT_ESCROW_BLOCK_TITLE, formatChatBlockMessage } from "../lib/chatSecurity";
 // ═══════════════════════════════════════════════════════════════
 // ✅ EMAILS AUTOMATIQUES — Resend via Supabase Edge Function
 // ═══════════════════════════════════════════════════════════════
