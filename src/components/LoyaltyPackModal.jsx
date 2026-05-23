@@ -5,6 +5,7 @@ import {
   ORANGE_NUMBER,
   PAYMENT_WA_NUMBER,
 } from "../lib/supabase";
+import { showAppToast } from "../lib/appToast";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : MODAL ACHAT PACK POINTS
@@ -81,7 +82,7 @@ export function LoyaltyPackModal({ pack, user, userData, onClose, onSuccess }) {
       onSuccess?.();
       onClose();
     } catch (err) {
-      alert("Erreur : " + err.message);
+      showAppToast("Erreur : " + err.message, "error");
     }
     setLoading(false);
   };

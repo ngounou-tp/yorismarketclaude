@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { showAppToast } from "../lib/appToast";
 
 // ═══════════════════════════════════════════════════════════════
 // ✅ FORMULAIRE BUSINESS — Envoi email + enregistrement Supabase
@@ -60,7 +61,7 @@ export function BusinessForm() {
       setSent(true);
       setForm({ entreprise:"", contact:"", email:"", telephone:"", besoins:"" });
     } catch (err) {
-      alert("Erreur : " + err.message);
+      showAppToast("Erreur : " + err.message, "error");
     }
     setLoading(false);
   };

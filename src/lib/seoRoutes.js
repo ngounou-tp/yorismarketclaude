@@ -485,6 +485,7 @@ export function parsePathname(pathname) {
 
   return {
     ...inner,
+    barePath: seg.barePath,
     locale: urlLocale,
     canonicalPath,
     localeRewriteTo,

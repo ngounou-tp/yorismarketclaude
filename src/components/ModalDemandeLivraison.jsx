@@ -3,6 +3,7 @@ import { YORIX_WA_NUMBER } from "../lib/supabase";
 import { CITIES } from "../lib/constants";
 import { deliveryTrackingPath } from "../lib/seoRoutes";
 import { creerDemandeLivraison } from "../utils/deliveryWorkflow";
+import { showAppToast, userFacingSuccess } from "../lib/appToast";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : MODAL DEMANDE DE LIVRAISON
@@ -98,7 +99,7 @@ export function ModalDemandeLivraison({ user, userData, siteLocale = "fr", onClo
 
     } catch (err) {
       console.error("ModalDemandeLivraison:", err);
-      alert("Erreur : " + (err?.message || "Impossible de créer la livraison"));
+      showAppToast("Erreur : " + (err?.message || "Impossible de créer la livraison"), "error");
     }
     setLoading(false);
   };
@@ -145,7 +146,7 @@ export function ModalDemandeLivraison({ user, userData, siteLocale = "fr", onClo
             <button
               onClick={() => {
                 navigator.clipboard?.writeText(codeGenere);
-                alert("✅ Code copié !");
+                userFacingSuccess("Code copié !");
               }}
               style={{
                 background: "var(--surface)", color: "var(--ink)",

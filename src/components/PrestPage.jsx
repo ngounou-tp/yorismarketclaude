@@ -13,6 +13,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { YORIX_WA_NUMBER } from "../lib/supabase";
 import { CITIES, PREST_DATA } from "../lib/constants";
+import { showAppToast } from "../lib/appToast";
 import { PrestCard, PREST_PRIX, formatPrestPrix } from "./PrestCard";
 
 // ── CATÉGORIES PRIORITAIRES (forte demande quotidienne) ──
@@ -89,7 +90,7 @@ export function PrestPage({
   // ── Géolocalisation ──
   const activerGeo = () => {
     if (!navigator.geolocation) {
-      alert("La géolocalisation n'est pas supportée par votre navigateur.");
+      showAppToast("La géolocalisation n'est pas supportée par votre navigateur.", "info");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -98,7 +99,7 @@ export function PrestPage({
         setGeoActive(true);
       },
       () => {
-        alert("Impossible d'obtenir votre position. Vérifiez les permissions.");
+        showAppToast("Impossible d'obtenir votre position. Vérifiez les permissions.", "warning");
       }
     );
   };

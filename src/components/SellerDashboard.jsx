@@ -17,6 +17,7 @@ import {
   toggleProductActive,
   deleteProduct,
 } from "../lib/catalogMutations";
+import { showAppToast } from "../lib/appToast";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : SELLER DASHBOARD — Yorix CM (version complète)
@@ -124,7 +125,7 @@ export function SellerDashboard({
     const raw = quickRestock[productId];
     const value = Number(raw);
     if (!Number.isFinite(value) || value <= 0) {
-      alert("Saisissez un stock supérieur à 0 pour réapprovisionner.");
+      showAppToast("Saisissez un stock supérieur à 0 pour réapprovisionner.");
       return;
     }
     setLoadingAction(true);
@@ -135,7 +136,7 @@ export function SellerDashboard({
       .eq("vendeur_id", user.id);
     setLoadingAction(false);
     if (error) {
-      alert("Erreur réapprovisionnement : " + error.message);
+      showAppToast("Erreur réapprovisionnement : " + error.message);
       return;
     }
     setQuickRestock((q) => ({ ...q, [productId]: "" }));
@@ -155,7 +156,7 @@ export function SellerDashboard({
       .eq("vendeur_id", user.id);
     setLoadingAction(false);
     if (error) {
-      alert("Erreur réactivation : " + error.message);
+      showAppToast("Erreur réactivation : " + error.message);
       return;
     }
     setQuickRestock((q) => ({ ...q, [productId]: "" }));
@@ -333,7 +334,7 @@ export function SellerDashboard({
 
   const saveEdit = async (id) => {
     if (!editForm.name_fr?.trim() || !editForm.prix || isNaN(Number(editForm.prix))) {
-      alert("Nom et prix sont obligatoires."); return;
+      showAppToast("Nom et prix sont obligatoires."); return;
     }
     setLoadingAction(true);
     const res = await updateProduct({
@@ -350,7 +351,7 @@ export function SellerDashboard({
     });
 
     if (!res.ok) {
-      alert("Erreur modification : " + res.error);
+      showAppToast("Erreur modification : " + res.error);
       setLoadingAction(false);
       return;
     }
@@ -363,7 +364,7 @@ export function SellerDashboard({
   const toggleActif = async (id, current) => {
     const prod = mesProduits.find((p) => p.id === id);
     if (prod?.is_pack && prod.pack_status !== "approved" && !current) {
-      alert("Ce pack doit être validé par l'admin avant publication.");
+      showAppToast("Ce pack doit être validé par l'admin avant publication.");
       return;
     }
     setLoadingAction(true);
@@ -372,7 +373,7 @@ export function SellerDashboard({
       currentActive: current,
       actor: { userId: user?.id, profile: userData },
     });
-    if (!res.ok) { alert("Erreur : " + res.error); setLoadingAction(false); return; }
+    if (!res.ok) { showAppToast("Erreur : " + res.error); setLoadingAction(false); return; }
     setMesProduits(prev => prev.map(p => p.id === id ? { ...p, actif: !current } : p));
     setLoadingAction(false);
   };
@@ -385,7 +386,7 @@ export function SellerDashboard({
       actor: { userId: user?.id, profile: userData },
     });
     if (!res.ok) {
-      alert("Erreur suppression : " + res.error);
+      showAppToast("Erreur suppression : " + res.error);
       setLoadingAction(false);
       return;
     }
@@ -406,7 +407,7 @@ export function SellerDashboard({
   // ── COMMANDES ──
   const updateOrderStatus = async (orderId, field, value) => {
     const { error } = await supabase.from("orders").update({ [field]: value }).eq("id", orderId);
-    if (error) { console.error(error); alert("Erreur : " + error.message); setPendingConfirm(null); return; }
+    if (error) { console.error(error); showAppToast("Erreur : " + error.message); setPendingConfirm(null); return; }
     setMesCommandes(prev => prev.map(c => c.id === orderId ? { ...c, [field]: value } : c));
     setPendingConfirm(null);
   };
@@ -755,7 +756,7 @@ export function SellerDashboard({
                               .eq("id", p.id)
                               .eq("vendeur_id", user.id);
                             setLoadingAction(false);
-                            if (error) alert(error.message);
+                            if (error) showAppToast(error.message);
                             else loadAll();
                           }}
                         >

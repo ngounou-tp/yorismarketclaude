@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase, YORIX_WA_NUMBER } from "../lib/supabase";
+import { showAppToast } from "../lib/appToast";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : MODAL ÉCHANGE RÉCOMPENSE
@@ -44,7 +45,7 @@ export function LoyaltyRedeemModal({ reward, userPoints, user, onClose, onSucces
       setDone(true);
       onSuccess?.();
     } catch (err) {
-      alert("Erreur : " + err.message);
+      showAppToast("Erreur : " + err.message, "error");
     }
     setLoading(false);
   };

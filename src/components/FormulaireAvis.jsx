@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { showAppToast } from "../lib/appToast";
 import { Stars } from "./Stars";
 
 // ─────────────────────────────────────────────────────────────
@@ -12,8 +13,8 @@ export function FormulaireAvis({ productId, userId, userName, onSubmit }) {
   const [done, setDone]       = useState(false);
 
   const submit = async () => {
-    if (!note) { alert("Choisissez une note !"); return; }
-    if (!texte.trim()) { alert("Rédigez un commentaire !"); return; }
+    if (!note) { showAppToast("Choisissez une note !", "error"); return; }
+    if (!texte.trim()) { showAppToast("Rédigez un commentaire !", "error"); return; }
     setLoading(true);
     try {
       await supabase.from("reviews").insert({

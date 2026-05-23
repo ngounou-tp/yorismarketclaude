@@ -76,6 +76,7 @@ import { PointsAnimation } from "./components/PointsAnimation";
 import { ModalDemandeLivraison } from "./components/ModalDemandeLivraison";
 import { CartDrawer } from "./components/CartDrawer";
 import { UserMenuDrawer } from "./components/UserMenuDrawer";
+import { GlobalToastHost } from "./components/ui/GlobalToastHost";
 import { getDefaultPolicyFromEnv, normalizeDeliveryPolicy } from "./domain/deliveryPolicy";
 import { enrichNotification, showBrowserNotificationIfPossible } from "./domain/notificationsDomain";
 import { applyNotificationOpen, getNotificationOpenAction } from "./lib/notificationNavigation.js";
@@ -666,7 +667,7 @@ export default function YorixApp() {
   }, []);
 
 
-  const routePath = location.pathname;
+  const routeBarePath = route.barePath ?? parseLocaleSegments(location.pathname).barePath;
 
   // ── SEO / Router : synchroniser filtres et fiches depuis l’URL indexable
   useEffect(() => {
@@ -679,14 +680,14 @@ export default function YorixApp() {
       setFilterCat(resolved.filterLabel || categoryNameFromTaxonomySlug(route.categorySlug) || "");
     } else if (route.categorySlug) {
       setFilterCat(categoryNameFromTaxonomySlug(route.subCategorySlug || route.categorySlug) || "");
-    } else if (route.page === "produits" && routePath === "/produits") {
+    } else if (route.page === "produits" && routeBarePath === PAGE_PATH.produits) {
       setFilterCat("");
       setCategoryFilter(null);
     } else if (route.page === "home") {
       setFilterCat("");
       setCategoryFilter(null);
     }
-  }, [route.categorySlug, route.subCategorySlug, route.page, routePath, categoryFlat]);
+  }, [route.categorySlug, route.subCategorySlug, route.page, routeBarePath, categoryFlat]);
 
   const seoCityName = useMemo(
     () => (route.citySlug ? CITY_BY_SLUG[route.citySlug]?.name : null),
@@ -703,11 +704,11 @@ export default function YorixApp() {
     if (route.page === "seoCity" && route.cityMode === "prestataires" && seoCityName) {
       return { cat: "", ville: seoCityName };
     }
-    if (route.page === "prestataires" && routePath === "/prestataires") {
+    if (route.page === "prestataires" && routeBarePath === PAGE_PATH.prestataires) {
       return { cat: "", ville: "" };
     }
     return null;
-  }, [route.page, route.metierSlug, route.villeSlug, route.cityMode, seoCityName, routePath]);
+  }, [route.page, route.metierSlug, route.villeSlug, route.cityMode, seoCityName, routeBarePath]);
 
   useEffect(() => {
     if (route.page !== "academyDetail" && route.page !== "academyContact") return;
@@ -1810,6 +1811,8 @@ export default function YorixApp() {
       />
 
       <PremiumSiteFooter goPage={goPage} freeShippingThresholdXaf={commerceDeliveryPolicy.freeShippingThresholdXaf} />
+
+      <GlobalToastHost />
     </>
   );
 }

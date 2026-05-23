@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { showAppToast } from "../lib/appToast";
 
 // ┌────────────────────────────────────────────────────────────┐
 // │ COMPOSANT : AcademyContactForm (formulaire inscription)    │
@@ -82,7 +83,7 @@ export function AcademyContactForm({ course, user, userData, goPage }) {
 
       setSent(true);
     } catch (err) {
-      alert("Erreur : " + err.message);
+      showAppToast("Erreur : " + err.message, "error");
     }
     setLoading(false);
   };

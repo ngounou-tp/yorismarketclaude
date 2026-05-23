@@ -58,7 +58,9 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         );
       }
     } catch (e) {
-      setState(() => _error = 'Erreur : $e');
+      if (mounted) {
+        setState(() => _error = 'Commande impossible. Réessayez dans un instant.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

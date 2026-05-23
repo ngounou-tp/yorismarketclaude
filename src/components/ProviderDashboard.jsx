@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { CITIES } from "../lib/constants";
 import { DASHBOARD_SERVICES_LIMIT } from "../lib/queryLimits";
+import { showAppToast } from "../lib/appToast";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : DASHBOARD PROVIDER (PRESTATAIRE)
@@ -46,7 +47,7 @@ export function ProviderDashboard({ user, userData, dashTab, setDashTab }) {
   const supprimerService = async (id) => {
     if (!confirm("Supprimer ce service ?")) return;
     const { error } = await supabase.from("services").delete().eq("id", id);
-    if (error) { alert("Erreur : " + error.message); return; }
+    if (error) { showAppToast("Erreur : " + error.message); return; }
     const { data: refreshed } = await supabase
       .from("services")
       .select("*")
@@ -61,7 +62,7 @@ export function ProviderDashboard({ user, userData, dashTab, setDashTab }) {
       .from("services")
       .update({ disponible: !current })
       .eq("id", id);
-    if (error) { alert("Erreur : " + error.message); return; }
+    if (error) { showAppToast("Erreur : " + error.message); return; }
     setMesServices(prev => prev.map(s => s.id === id ? { ...s, disponible: !current } : s));
   };
 
@@ -69,7 +70,7 @@ export function ProviderDashboard({ user, userData, dashTab, setDashTab }) {
     const nextStatus = accepte ? "accepted" : "refused";
     const { error } = await supabase.from("service_bookings").update({ status: nextStatus }).eq("id", id);
     if (error) {
-      alert("Erreur : " + error.message);
+      showAppToast("Erreur : " + error.message);
       return;
     }
     setDemandes((prev) => prev.map((d) => (d.id === id ? { ...d, status: nextStatus } : d)));
@@ -77,7 +78,7 @@ export function ProviderDashboard({ user, userData, dashTab, setDashTab }) {
 
   const saveService = async () => {
     if (!serviceForm.nom || !serviceForm.prix) {
-      alert("Nom et prix obligatoires !");
+      showAppToast("Nom et prix obligatoires !");
       return;
     }
     const { error } = await supabase.from("services").insert({
@@ -90,7 +91,7 @@ export function ProviderDashboard({ user, userData, dashTab, setDashTab }) {
 
     if (error) {
       console.error("Erreur publication service:", error);
-      alert("Erreur : " + error.message);
+      showAppToast("Erreur : " + error.message);
       return;
     }
     setServiceForm({ nom: "", categorie: "", description: "", prix: "", ville: "", disponible: true });

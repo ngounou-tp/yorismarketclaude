@@ -13,6 +13,7 @@
 
 import { useState, useMemo } from "react";
 import { YORIX_WA_NUMBER } from "../lib/supabase";
+import { showAppToast } from "../lib/appToast";
 
 // ── TARIFS YORIX CM (FCFA) ──
 const TARIFS = {
@@ -519,7 +520,7 @@ export function DeliveryQuickOrder({ user, userData, onOpenFullModal }) {
   // ── COMMANDER VIA WHATSAPP ──
   const commanderWhatsApp = () => {
     if (!depart.trim() || !arrivee.trim()) {
-      alert("Indiquez d'abord les adresses de départ et de destination.");
+      showAppToast("Indiquez d'abord les adresses de départ et de destination.", "warning");
       return;
     }
     const tarif = TARIFS[typeColis];

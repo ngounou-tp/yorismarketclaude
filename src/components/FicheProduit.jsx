@@ -10,6 +10,7 @@ import { TrustStrip } from "./conversion/TrustStrip";
 import { ShareWhatsAppButton } from "./conversion/ShareWhatsAppButton";
 import { SocialProofLine } from "./conversion/SocialProofLine";
 import { isPurchasable } from "../lib/stockStatus";
+import { effectiveProductPrice, isPromoActive, productPromoListPrice } from "../lib/productPricing";
 import { YorixToast, useYorixToast } from "./ui/YorixToast";
 
 // ─────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 // YORIX CM — Messagerie sécurisée (peer + annonces Yorix Équipe)
-// ✅ VERSION CORRIGÉE - Fix: setFeedback undefined + améliorations UX
+// Messagerie Yorix — hub peer-to-peer (conversations, escrow, realtime)
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "../lib/supabase";
@@ -489,9 +489,7 @@ export function ChatUsers({
     }
 
     setSending(true);
-    // ❌ AVANT (BUG) : setFeedback(null);  <-- Cette ligne faisait planter la page !
-    // ✅ APRÈS : supprimé car setFeedback n'était jamais déclaré
-    
+
     try {
       const result = await insertChatMessage(supabase, {
         conversationId: activeId,

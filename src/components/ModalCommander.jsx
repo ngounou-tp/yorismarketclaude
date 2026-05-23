@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createCheckoutIntent, confirmCheckout } from "../lib/checkoutApi";
+import { showAppToast } from "../lib/appToast";
 
 // ─────────────────────────────────────────────────────────────
 // COMPOSANT : MODAL COMMANDER (Commande + WhatsApp)
@@ -64,7 +65,7 @@ export function ModalCommander({ product, user, userData, onClose, onSuccess }) 
       }, codes.length > 0 ? 5000 : 2000);
     } catch (err) {
       console.error("creerCommande:", err);
-      alert("Erreur lors de la commande : " + err.message);
+      showAppToast("Erreur lors de la commande : " + err.message, "error");
     }
     setLoading(false);
   };
