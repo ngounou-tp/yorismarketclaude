@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "cm.yorix.app",
+        "sha256_cert_fingerprints": ["31:8B:12:59:AD:45:CD:42:F3:2E:A7:2D:C5:6A:F4:45:D8:E9:55:D1:B0:56:53:BE:39:F2:2C:95:9E:E7:B0:C1"]
+      }
+    }]
