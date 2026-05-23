@@ -6,34 +6,13 @@ import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import {
   enrichNotification,
-  getNotificationCategoryLabel,
   getNotificationFullBody,
 } from "../domain/notificationsDomain";
 import { getNotificationOpenAction, stashNotificationOpenId } from "../lib/notificationNavigation";
+import { NotificationRowContent, NotificationSkeletonList } from "./notifications/NotificationRowContent";
 
 const PAGE_SIZE = 10;
 const MOBILE_MQ = "(max-width: 768px)";
-
-function timeAgo(date) {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (diff < 60) return "à l'instant";
-  if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
-  if (diff < 604800) return `il y a ${Math.floor(diff / 86400)} j`;
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-}
-
-function colorForCategory(category) {
-  const c = (category || "").toLowerCase();
-  if (["orders", "order", "commande"].includes(c)) return "var(--green)";
-  if (["messages", "message", "chat"].includes(c)) return "#2563eb";
-  if (["promos", "promo", "promotions"].includes(c)) return "#dc2626";
-  if (["payments", "payment", "paiement"].includes(c)) return "#059669";
-  if (["delivery", "livraison"].includes(c)) return "#d97706";
-  if (["catalog"].includes(c)) return "var(--green)";
-  return "var(--gray)";
-}
 
 function hapticTap() {
   try {
@@ -228,8 +207,10 @@ export function NotificationBell({
         </div>
       </div>
 
-      <div className="ybell-list">
-        {items.length === 0 && !loading ? (
+      <div className="ybell-list ybell-scroll-panel">
+        {loading && items.length === 0 ? (
+          <NotificationSkeletonList count={4} />
+        ) : items.length === 0 ? (
           <div className="ybell-empty">
             <div className="ybell-empty-ico">🔕</div>
             <p>Aucune notification pour le moment.</p>
@@ -238,8 +219,6 @@ export function NotificationBell({
           <>
             {items.map((n) => {
               const enriched = enrichNotification(n);
-              const cat = enriched._category;
-              const catColor = colorForCategory(cat);
               return (
                 <div
                   key={n.id}
@@ -249,28 +228,17 @@ export function NotificationBell({
                   tabIndex={0}
                   onKeyDown={(e) => e.key === "Enter" && handleSelectNotif(n)}
                 >
-                  <div className="ybell-item-icon">{n.icon || enriched._icon}</div>
-                  <div className="ybell-item-content">
-                    <div className="ybell-item-title">{n.titre || n.title || enriched._title}</div>
-                    <div className="ybell-item-msg">{enriched._body || n.message}</div>
-                    <div className="ybell-item-meta">
-                      <span
-                        className="ybell-item-cat"
-                        style={{
-                          background: `color-mix(in srgb, ${catColor} 14%, transparent)`,
-                          color: catColor,
-                        }}
-                      >
-                        {getNotificationCategoryLabel(cat)}
-                      </span>
-                      <span>·</span>
-                      <span>{timeAgo(n.created_at)}</span>
-                    </div>
-                  </div>
+                  <NotificationRowContent
+                    enriched={enriched}
+                    raw={n}
+                    timeLabel={enriched._timeAgo || enriched._timeLabel}
+                    compact
+                    showUnreadDot
+                  />
                 </div>
               );
             })}
-            {loading && <div className="ybell-loading">Chargement…</div>}
+            {loading && items.length > 0 && <div className="ybell-loading">Chargement…</div>}
           </>
         )}
       </div>
@@ -358,17 +326,18 @@ export function NotificationBell({
     @keyframes ybellPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     .ybell-drop {
       position: absolute; top: calc(100% + 8px); right: 0;
-      width: min(380px, 92vw); max-height: min(540px, calc(100vh - 96px));
+      width: min(420px, 92vw); max-height: min(560px, calc(100vh - 96px));
       background: var(--surface); color: var(--ink);
-      border-radius: 14px; box-shadow: 0 22px 60px rgba(0, 0, 0, .18);
+      border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.12), 0 4px 14px rgba(26,107,58,.08);
       border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;
-      z-index: 9999; animation: ybellSlide .18s ease-out;
+      z-index: 9999; animation: ybellSlide .22s ease-out;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     }
     @keyframes ybellSlide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
     .ybell-m-backdrop {
       position: fixed; inset: 0; z-index: 1070;
-      background: rgba(13, 31, 20, .42);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      background: rgba(13, 31, 20, .45);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       animation: ybellFadeIn .22s ease;
     }
     @keyframes ybellFadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -388,6 +357,7 @@ export function NotificationBell({
     .ybell-head {
       padding: 14px 16px; background: linear-gradient(135deg, #0a1410, #1a3a24); color: #fff;
       display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 10px;
+      position: sticky; top: 0; z-index: 2;
     }
     .ybell-head-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; letter-spacing: -.3px; min-width: 0; }
     .ybell-head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
@@ -403,39 +373,21 @@ export function NotificationBell({
       background: rgba(255,255,255,.1); color: #fff; cursor: pointer; font-size: .85rem;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .ybell-list { flex: 1; overflow-y: auto; padding: 6px; min-height: 0; -webkit-overflow-scrolling: touch; }
+    .ybell-scroll-panel {
+      flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px;
+      min-height: 0; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
+    }
     .ybell-empty { padding: 50px 24px; text-align: center; color: var(--gray); }
     .ybell-empty-ico { font-size: 2.6rem; opacity: .35; margin-bottom: 10px; }
     .ybell-item {
-      display: flex; gap: 12px; padding: 12px; border-radius: 10px; cursor: pointer;
-      transition: background .12s; position: relative; min-height: 44px;
+      width: 100%; box-sizing: border-box; border-radius: 12px; cursor: pointer;
+      transition: background .2s ease, transform .12s ease; position: relative;
+      margin-bottom: 6px; border: 1px solid transparent;
     }
-    .ybell-item:active { background: var(--surface2); }
-    .ybell-item--unread { background: rgba(26, 107, 58, .06); }
-    .ybell-item--unread::before {
-      content: ''; position: absolute; top: 18px; left: 4px;
-      width: 6px; height: 6px; background: var(--green); border-radius: 50%;
-    }
-    .ybell-item-icon {
-      width: 38px; height: 38px; border-radius: 11px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; flex-shrink: 0; background: var(--green-pale);
-      border: 1px solid var(--border);
-    }
-    .ybell-item-content { flex: 1; min-width: 0; }
-    .ybell-item-title {
-      font-family: 'Syne', sans-serif; font-weight: 800; font-size: .86rem;
-      color: var(--ink); margin-bottom: 2px; line-height: 1.25;
-    }
-    .ybell-item-msg {
-      font-size: .78rem; color: var(--gray); line-height: 1.4; margin-bottom: 4px;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .ybell-item-meta { display: flex; align-items: center; gap: 6px; font-size: .68rem; color: var(--gray); }
-    .ybell-item-cat {
-      display: inline-block; padding: 1px 7px; border-radius: 50px;
-      font-weight: 700; font-size: .62rem;
-    }
+    .ybell-item:hover { background: var(--surface2); }
+    .ybell-item:active { transform: scale(0.99); }
+    .ybell-item--unread { background: rgba(26, 107, 58, .05); border-color: rgba(26,107,58,.12); }
+    .ybell-item--selected { background: rgba(26, 107, 58, .1); border-color: rgba(26,107,58,.25); box-shadow: 0 0 0 2px rgba(26,107,58,.12); }
     .ybell-foot { border-top: 1px solid var(--border); padding: 10px; display: flex; gap: 8px; flex-shrink: 0; }
     .ybell-foot-btn {
       flex: 1; padding: 11px 9px; background: var(--surface2); border: 1px solid var(--border);
@@ -449,7 +401,7 @@ export function NotificationBell({
       max-height: 42vh; overflow-y: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0;
     }
     .ybell-detail-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: .92rem; margin: 0 0 8px; color: var(--ink); }
-    .ybell-detail-body { font-size: .82rem; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; margin: 0 0 12px; opacity: .9; }
+    .ybell-detail-body { font-size: .88rem; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; margin: 0 0 12px; }
     .ybell-detail-actions { display: flex; flex-direction: column; gap: 8px; }
     .ybell-detail-btn {
       padding: 11px 14px; border-radius: 9px; border: none; cursor: pointer;
@@ -457,7 +409,6 @@ export function NotificationBell({
     }
     .ybell-detail-btn--primary { background: var(--green); color: #fff; }
     .ybell-detail-btn--ghost { background: var(--surface); border: 1px solid var(--border); color: var(--ink); }
-    .ybell-item--selected { background: rgba(26, 107, 58, .1); outline: 2px solid rgba(26, 107, 58, .25); }
     @media (min-width: 769px) {
       .ybell-btn { background: none; border: none; min-width: auto; min-height: auto; padding: 8px; }
       .ybell-badge { border: none; top: 3px; right: 3px; }

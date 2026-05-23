@@ -86,26 +86,60 @@ function inferFromType(type, titre, message) {
   return { category: NOTIF_CATEGORIES.system, priority: NOTIF_PRIORITIES.standard };
 }
 
-/** Corps complet pour le panneau détail (texte intégral, retours à la ligne conservés). */
+/** Corps complet pour le panneau détail (texte nettoyé, sans URLs techniques). */
 export function getNotificationFullBody(row) {
   if (row == null) return "";
   const msg = row.message ?? row.body ?? row.content ?? "";
-  return String(msg).trim();
+  return cleanNotificationText(String(msg));
 }
 
-/** Remplace URLs brutes par un libellé lisible. */
+/**
+ * Retire URLs, chemins Cloudinary et extensions image du texte affiché.
+ * @param {string} text
+ */
+export function cleanNotificationText(text = "") {
+  let s = String(text ?? "");
+  s = s.replace(/https?:\/\/[^\s]+/gi, " ");
+  s = s.replace(/\/image\/upload[^\s]*/gi, " ");
+  s = s.replace(/\/[^\s]*\.(jpg|jpeg|png|webp|gif|svg|avif)(\?[^\s]*)?/gi, " ");
+  s = s.replace(/\b[\w-]+(?:\/[\w.-]+)+\.(jpg|jpeg|png|webp|gif)\b/gi, " ");
+  s = s.replace(/res\.cloudinary\.com[^\s]*/gi, " ");
+  s = s.replace(/\s{2,}/g, " ").trim();
+  return s;
+}
+
+/** Extrait une URL image utilisable depuis le message brut. */
+export function extractNotificationImageUrl(text) {
+  const s = String(text ?? "");
+  const httpImg = s.match(/https?:\/\/[^\s]+?\.(?:jpg|jpeg|png|webp|gif|avif)(?:\?[^\s]*)?/i);
+  if (httpImg) return httpImg[0];
+  const cloud = s.match(/https?:\/\/[^\s]*\/image\/upload\/[^\s]+/i);
+  if (cloud) return cloud[0].replace(/[,)\]}>]+$/, "");
+  return null;
+}
+
+function cleanNotificationTitle(title) {
+  const cleaned = cleanNotificationText(title);
+  return cleaned || "Notification Yorix";
+}
+
+/** Temps relatif FR (il y a X min). */
+export function formatNotificationTimeAgo(date) {
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return "";
+  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (diff < 60) return "à l'instant";
+  if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
+  if (diff < 604800) return `il y a ${Math.floor(diff / 86400)} j`;
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+/** Remplace URLs brutes par un libellé lisible (legacy — préférer cleanNotificationText en liste). */
 export function formatNotificationBody(raw) {
   if (raw == null) return "";
-  return String(raw).replace(/https?:\/\/[^\s]+/g, (url) => {
-    try {
-      const u = new URL(url);
-      if (u.hostname.includes("wa.me") || u.hostname.includes("whatsapp")) return "Lien WhatsApp";
-      if (u.hostname.includes("yorix")) return "Ouvrir sur Yorix";
-      return `[${u.hostname}]`;
-    } catch {
-      return "Lien";
-    }
-  });
+  return cleanNotificationText(String(raw));
 }
 
 /**
@@ -113,23 +147,27 @@ export function formatNotificationBody(raw) {
  */
 export function enrichNotification(row) {
   const type = row.type || "";
+  const rawMessage = row.message ?? row.body ?? row.content ?? "";
   const displayTitle = String(row.titre || row.title || "");
-  const inferred = inferFromType(type, displayTitle, row.message);
+  const inferred = inferFromType(type, displayTitle, rawMessage);
   const rawCategory = row.category || inferred.category;
   const category = rawCategory === "catalog" ? NOTIF_CATEGORIES.catalog : rawCategory;
   const priority = normalizeNotificationPriority(row.priority || inferred.priority);
+
+  const explicitImage =
+    row.image_url ||
+    (typeof row.metadata === "object" && row.metadata !== null && row.metadata.image_url) ||
+    null;
+  const imageFromMessage = extractNotificationImageUrl(rawMessage);
 
   return {
     ...row,
     _category: category,
     _priority: priority,
     _icon: row.icon || CATEGORY_ICONS[category] || "🔔",
-    _title: displayTitle || "Notification Yorix",
-    _body: formatNotificationBody(row.message),
-    _image:
-      row.image_url ||
-      (typeof row.metadata === "object" && row.metadata !== null && row.metadata.image_url) ||
-      null,
+    _title: cleanNotificationTitle(displayTitle),
+    _body: formatNotificationBody(rawMessage),
+    _image: explicitImage || imageFromMessage || null,
     _deeplink: typeof row.link === "string" ? row.link.trim() : "",
     _timeLabel: row.created_at
       ? new Date(row.created_at).toLocaleString("fr-FR", {
@@ -137,6 +175,7 @@ export function enrichNotification(row) {
           timeStyle: "short",
         })
       : "",
+    _timeAgo: formatNotificationTimeAgo(row.created_at),
   };
 }
 

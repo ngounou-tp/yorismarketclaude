@@ -17,6 +17,7 @@ import { supabase } from "../lib/supabase";
 import { EMAIL_POLICY_HINT_FR } from "../lib/notificationChannels";
 import { PushManager } from "./PushManager";
 import { EnablePushButton } from "./EnablePushButton";
+import { NotificationRowContent, NotificationSkeletonList } from "./notifications/NotificationRowContent";
 
 const FILTERS = [
   { key: "all", label: "Tous" },
@@ -80,8 +81,8 @@ function NotificationDetailPanel({ raw, enriched, onClose, onOpen, onDismiss, si
 
       <div className="notif-detail__body-wrap">
         <p className="notif-detail__body">{fullBody || enriched._body || "—"}</p>
-        {enriched._deeplink?.startsWith("http") && (
-          <p className="notif-detail__link-hint">Lien externe : {enriched._deeplink}</p>
+        {enriched._deeplink?.startsWith("http") && !/\/image\/upload/i.test(enriched._deeplink) && (
+          <p className="notif-detail__link-hint">Lien externe disponible dans l’action « Ouvrir »</p>
         )}
         {enriched._deeplink?.startsWith("/") && (
           <p className="notif-detail__link-hint">Page Yorix : {enriched._deeplink}</p>
@@ -258,34 +259,27 @@ export function NotificationCenter({
                   return (
                     <li
                       key={String(n.id)}
-                      className={`notif-card-li ${priorityClass(n._priority)}${isSelected ? " notif-card-li--selected" : ""}`}
+                      className={`notif-card-li ${priorityClass(n._priority)}${isSelected ? " notif-card-li--selected" : ""}${!raw.lu ? " notif-card-li--unread" : ""}`}
                     >
                       <button
                         type="button"
-                        className={`notif-card-main${raw.lu ? "" : " notif-card-unread"}`}
+                        className="notif-card-main"
                         aria-pressed={isSelected}
                         onClick={() => selectNotification(raw)}
                       >
-                        <span className="notif-card-avatar" aria-hidden>
-                          {n._image ? <img src={n._image} alt="" loading="lazy" /> : <span className="notif-card-emoji">{n._icon}</span>}
-                          {!raw.lu && <span className="notif-card-dot" />}
-                        </span>
-                        <span className="notif-card-copy">
-                          <span className="notif-card-top">
-                            <span className="notif-card-title">{n._title}</span>
-                            <time className="notif-card-time" dateTime={raw.created_at || undefined}>
-                              {n._timeLabel}
-                            </time>
-                          </span>
-                          <span className="notif-card-body">{n._body}</span>
-                          <span className="notif-card-cta-secondary">Appuyer pour voir le détail complet</span>
-                        </span>
+                        <NotificationRowContent
+                          enriched={n}
+                          raw={raw}
+                          timeLabel={n._timeAgo || n._timeLabel}
+                          showUnreadDot
+                        />
                       </button>
                       <div className="notif-card-side">
                         <button
                           type="button"
                           className="notif-mini-btn"
-                          title="Lu"
+                          title="Marquer comme lu"
+                          aria-label="Marquer comme lu"
                           onClick={(e) => {
                             e.stopPropagation();
                             onMarkRead?.(raw, { navigate: false, closeDrawer: false });
@@ -296,7 +290,8 @@ export function NotificationCenter({
                         <button
                           type="button"
                           className="notif-mini-btn notif-mini-btn-del"
-                          title="Masquer"
+                          title="Supprimer"
+                          aria-label="Supprimer la notification"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (String(raw.id) === String(selectedId)) setSelectedId(null);
