@@ -1509,7 +1509,9 @@ input, select, textarea {
   }
   form button { width: 100%; padding: 14px !important; margin-top: 8px; }
 
-  [role="dialog"], .modal {
+  /* Modals/dialogs : recadrer sur mobile — EXCLURE les drawers fixes */
+  [role="dialog"]:not(.umd-drawer):not(.cart-drawer):not(.notif-drawer),
+  .modal {
     width: 95vw !important;
     max-width: 95vw !important;
     max-height: 90vh;
@@ -1558,8 +1560,13 @@ input, select, textarea {
     overflow-x: hidden;
   }
   
-  /* Écrase les min-width qui cassent tout */
-  body, #root, main, section, header, footer, nav, aside, div {
+  /* Écrase les min-width qui cassent le layout — exclure les drawers fixes */
+  body, #root, main, section, header, footer, nav {
+    min-width: 0 !important;
+  }
+  /* aside et div : uniquement ceux dans le flux normal, pas les overlays fixes */
+  aside:not(.umd-drawer):not(.cart-drawer),
+  div:not(.umd-overlay):not(.cart-overlay) {
     min-width: 0 !important;
   }
   
@@ -2896,11 +2903,6 @@ button.yorix-chip.wa:hover{background:rgba(37,211,102,.14);border-color:var(--wa
    🔟 FIX GLOBAL : OVERFLOW & ZONES TACTILES
    ─────────────────────────────────────────────────────────────────────────── */
 
-html, body, #root {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
-}
-
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -3162,6 +3164,45 @@ img, video {
 /* ═══════════════════════════════════════════════════════════════════════════
    FIN DES FIXES MOBILE V2
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔒 PROTECTION DRAWERS FIXES — Ne jamais laisser des règles mobiles
+   écraser position:fixed / transform / z-index des panneaux flottants.
+   Ces règles viennent EN DERNIER pour gagner la cascade.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.umd-overlay,
+.umd-drawer,
+.cart-overlay,
+.cart-drawer {
+  position: fixed !important;
+}
+.umd-overlay {
+  inset: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  z-index: 700 !important;
+}
+.umd-drawer {
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  width: min(380px, 100vw) !important;
+  max-width: min(380px, 100vw) !important;
+  min-width: 0 !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  z-index: 701 !important;
+  transform: translateX(100%) !important;
+}
+.umd-drawer.open {
+  transform: translateX(0) !important;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    🎯 YORIX CM - SPRINT 2 & 3 FIXES
