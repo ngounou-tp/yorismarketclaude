@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
-import { getUserProfile, getUserRole, sendEmail, emailBienvenue } from "../utils/helpers";
+import { getUserProfile, sendEmail, emailBienvenue } from "../utils/helpers";
 import { isProfileAccessible } from "../lib/userMutations";
 
 /**
@@ -21,7 +21,13 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
 
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState("login");
-  const [selectedRole, setSelectedRole] = useState("buyer");
+  const [selectedRole, _setSelectedRole] = useState(
+    () => localStorage.getItem("yorix_pending_role") || "buyer"
+  );
+  const setSelectedRole = (role) => {
+    localStorage.setItem("yorix_pending_role", role);
+    _setSelectedRole(role);
+  };
   const [authForm, setAuthForm] = useState({ nom: "", email: "", tel: "", password: "" });
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -44,12 +50,47 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
   }, [setNotifs]);
 
   const chargerProfil = useCallback(
-    async (uid) => {
+    async (uid, oauthUserMeta = null) => {
       const profile = await getUserProfile(uid);
+
+      if (!profile) {
+        if (oauthUserMeta) {
+          // Nouvel utilisateur OAuth — créer le profil une seule fois
+          // INSERT ... ON CONFLICT DO NOTHING : ne jamais écraser un profil existant
+          const pendingRole = localStorage.getItem("yorix_pending_role") || "buyer";
+          const meta = oauthUserMeta.user_metadata || {};
+          await supabase.from("profiles").insert({
+            id: uid,
+            nom: meta.full_name || meta.name || oauthUserMeta.email || "",
+            email: oauthUserMeta.email || "",
+            telephone: "",
+            role: pendingRole,
+            langue: "fr",
+            actif: true,
+            verifie: false,
+            note: 0,
+            nombre_avis: 0,
+            total_commandes: 0,
+          });
+          // Recharger après création
+          const created = await getUserProfile(uid);
+          if (created) {
+            if (!(await enforceProfileAccess(created))) return;
+            setUserData(created);
+            // Rôle exact de la base — aucune transformation
+            setUserRole(created.role || "buyer");
+            await onProfileLoaded(uid);
+          }
+        }
+        // Profil null sans OAuth (erreur réseau / RLS lente) : ne pas écraser le rôle actuel
+        return;
+      }
+
       if (!(await enforceProfileAccess(profile))) return;
-      const role = getUserRole(profile);
+
       setUserData(profile);
-      setUserRole(role);
+      // Rôle exact depuis profiles.role — correspond 1:1 à ce qui est en base
+      setUserRole(profile.role || "buyer");
       await onProfileLoaded(uid);
     },
     [onProfileLoaded, enforceProfileAccess],
@@ -64,7 +105,8 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
         if (error) console.warn("Auth getSession:", error.message);
         if (session?.user) {
           setUser(session.user);
-          chargerProfil(session.user.id);
+          // Passer l'objet user pour détecter un éventuel compte OAuth sans profil
+          chargerProfil(session.user.id, session.user);
         }
         setLoading(false);
       })
@@ -75,9 +117,10 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_e, session) => {
+      // Callback synchrone — pas d'async ici pour éviter les race conditions Supabase
       if (session?.user) {
         setUser(session.user);
-        chargerProfil(session.user.id);
+        chargerProfil(session.user.id, session.user);
       } else {
         setUser(null);
         setUserData(null);
@@ -217,6 +260,8 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
   };
 
   const doGoogle = async () => {
+    // Persist role so it survives the OAuth redirect
+    localStorage.setItem("yorix_pending_role", selectedRole);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.origin },

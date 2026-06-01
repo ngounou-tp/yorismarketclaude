@@ -497,7 +497,7 @@ export function YorixPages({ ctx }) {
                   <LazyProviderDashboard user={user} userData={userData} dashTab={dashTab} setDashTab={setDashTab} />
                 </Suspense>
               )}
-              {dashTab !== "messages" && (userRole === "buyer" || !userRole) && (
+              {dashTab !== "messages" && !["seller","delivery","provider","admin"].includes(userRole) && (
                 <Suspense fallback={<RouteSuspenseFallback label="Chargement tableau de bord..." />}>
                   <LazyBuyerDashboard
                     user={user}
@@ -563,23 +563,17 @@ export function YorixPages({ ctx }) {
       <div className="mobile-nav">
         <div className="mn-inner">
           {[
-            { icon: "🏠", label: "Accueil", p: "home" },
-            { icon: "🛍️", label: "Produits", p: "produits" },
-            { icon: "🛒", label: "Panier", p: "cart", drawer: true },
-            { icon: "🔔", label: "Alertes", p: "notifications" },
-            { icon: "📊", label: "Mon espace", p: "dashboard" },
-            { icon: "💬", label: "WhatsApp", p: "wa" },
+            { icon: "🏠", label: "Accueil",   p: "home" },
+            { icon: "🛍️", label: "Produits",  p: "produits" },
+            { icon: "🛒", label: "Panier",    p: "cart", drawer: true, cart: true },
+            { icon: "🔔", label: "Alertes",   p: "notifications" },
+            { icon: "👤", label: "Mon espace", p: "dashboard" },
           ].map((item) => (
             <div
               key={item.label}
-              className={`mn-item${tabActive(item.p) ? " active" : ""}`}
+              className={`mn-item${item.cart ? " mn-item--cart" : ""}${tabActive(item.p) ? " active" : ""}`}
               onClick={() => {
-                if (item.p === "wa") {
-                  window.open(
-                    `https://wa.me/${YORIX_WA_NUMBER}?text=${encodeURIComponent("Bonjour Yorix ! J'ai besoin d'aide.")}`,
-                    "_blank",
-                  );
-                } else if (item.p === "dashboard" && !user) {
+                if (item.p === "dashboard" && !user) {
                   setAuthTab("register");
                   setAuthOpen(true);
                 } else if (item.p === "notifications" && !user) {
@@ -591,27 +585,23 @@ export function YorixPages({ ctx }) {
                 }
               }}
             >
-              <div className="mn-icon">{item.icon}</div>
+              {item.cart ? (
+                <div className="mn-icon-wrap">
+                  <div className="mn-icon">{item.icon}</div>
+                </div>
+              ) : (
+                <div className="mn-icon">{item.icon}</div>
+              )}
               <div className="mn-label">{item.label}</div>
-              {item.p === "cart" && totalQty > 0 && <div className="mn-badge">{totalQty}</div>}
+              {item.p === "cart" && totalQty > 0 && (
+                <div className="mn-badge">{totalQty > 99 ? "99+" : totalQty}</div>
+              )}
               {item.p === "notifications" && unread > 0 && user && (
                 <div className="mn-badge">{unread > 99 ? "99+" : unread}</div>
               )}
               {item.p === "dashboard" && !user && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 2,
-                    background: "var(--green)",
-                    color: "#fff",
-                    fontSize: ".45rem",
-                    fontWeight: 700,
-                    padding: "1px 3px",
-                    borderRadius: 3,
-                  }}
-                >
-                  S'inscrire
+                <div className="mn-badge" style={{ background: "var(--green)", fontSize: ".45rem", minWidth: 20, height: 14 }}>
+                  NEW
                 </div>
               )}
             </div>

@@ -28,15 +28,14 @@ export function canWriteAdmin(profile) {
 }
 
 /**
- * Rôle affiché dans le header / dashboard (chip).
- * admin_partner → vendeur (invisible comme rôle staff).
+ * Rôle exact depuis profiles.role.
+ * Seul mapping conservé : superadmin/admin → "admin" pour le routage dashboard.
+ * admin_partner garde son rôle propre (ne masque plus comme "seller").
  */
 export function getUserRole(profile) {
   const r = getProfileRole(profile);
-  if (r === "superadmin") return "admin";
-  if (r === ROLE_ADMIN_PARTNER) return "seller";
-  if (r === "admin") return "admin";
-  const valid = [...ROLES_PUBLIC_SIGNUP, "admin"];
+  if (r === "superadmin" || r === "admin") return "admin";
+  const valid = [...ROLES_PUBLIC_SIGNUP, "admin", ROLE_ADMIN_PARTNER];
   if (valid.includes(r)) return r;
   return "buyer";
 }

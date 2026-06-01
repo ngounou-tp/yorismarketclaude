@@ -542,7 +542,7 @@ export default function YorixApp() {
       buy:      { needAuth: false, page: "produits" },
       sell:     { needAuth: true,  role: "seller",   page: "dashboard" },
       service:  { needAuth: false, page: "prestataires" },
-      delivery: { needAuth: true,  role: "buyer",    action: "openDelivery" },
+      delivery: { needAuth: true,  role: "delivery", action: "openDelivery" },
     };
 
     const target = routes[actionId];
@@ -996,7 +996,7 @@ export default function YorixApp() {
   );
 
   const roleChipClass = () =>
-    ({ buyer:"chip-buyer", seller:"chip-seller", delivery:"chip-delivery", provider:"chip-provider", admin:"chip-admin" }[userRole] || "chip-buyer");
+    ({ buyer:"chip-buyer", seller:"chip-seller", delivery:"chip-delivery", provider:"chip-provider", admin:"chip-admin", admin_partner:"chip-admin", superadmin:"chip-admin" }[userRole] || "chip-buyer");
 
   const { t: tNav } = useTranslation("nav");
 
