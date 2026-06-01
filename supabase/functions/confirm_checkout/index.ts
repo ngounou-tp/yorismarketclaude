@@ -203,6 +203,16 @@ Deno.serve(async (req) => {
       });
       if (itemError) throw itemError;
 
+      // Décrémentation du stock — appel RPC atomique défini dans la migration SQL
+      const { error: stockErr } = await supabase.rpc("decrement_product_stock", {
+        p_product_id: pid,
+        p_qty: qty,
+      });
+      if (stockErr) {
+        console.error(`[confirm_checkout] stock decrement ${pid}:`, stockErr.message);
+        // Non-bloquant : on continue mais on log pour audit
+      }
+
       if (fulfillment !== "pickup") {
         const vn = String((item as { vendeur_nom?: string }).vendeur_nom || "vendeur");
         const vville = String((item as { ville?: string }).ville || "").trim();
