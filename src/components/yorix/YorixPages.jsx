@@ -497,7 +497,7 @@ export function YorixPages({ ctx }) {
                   <LazyProviderDashboard user={user} userData={userData} dashTab={dashTab} setDashTab={setDashTab} />
                 </Suspense>
               )}
-              {dashTab !== "messages" && !["seller","delivery","provider","admin"].includes(userRole) && (
+              {dashTab !== "messages" && !["seller","delivery","provider"].includes(userRole) && (
                 <Suspense fallback={<RouteSuspenseFallback label="Chargement tableau de bord..." />}>
                   <LazyBuyerDashboard
                     user={user}

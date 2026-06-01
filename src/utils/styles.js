@@ -3166,27 +3166,34 @@ img, video {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   🔒 PROTECTION DRAWERS FIXES — Ne jamais laisser des règles mobiles
-   écraser position:fixed / transform / z-index des panneaux flottants.
-   Ces règles viennent EN DERNIER pour gagner la cascade.
+   🎯 YORIX CM - SPRINT 2 & 3 FIXES
+   Menu burger + FicheProduit + Cart + Dashboards + Checkout
    ═══════════════════════════════════════════════════════════════════════════ */
-.umd-overlay,
-.umd-drawer,
-.cart-overlay,
-.cart-drawer {
-  position: fixed !important;
-}
+
+/* ─── 1. USER MENU DRAWER ───────────────────────────────────────────────── */
 .umd-overlay {
+  position: fixed !important;
   inset: 0 !important;
   width: auto !important;
   max-width: none !important;
   min-width: 0 !important;
   height: auto !important;
   max-height: none !important;
-  overflow: visible !important;
+  background: rgba(0, 0, 0, 0.55) !important;
   z-index: 700 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+  transition: opacity 0.3s ease !important;
+  backdrop-filter: blur(3px) !important;
+  -webkit-backdrop-filter: blur(3px) !important;
+}
+.umd-overlay.open {
+  opacity: 1 !important;
+  pointer-events: all !important;
 }
 .umd-drawer {
+  position: fixed !important;
   top: 0 !important;
   right: 0 !important;
   left: auto !important;
@@ -3195,54 +3202,17 @@ img, video {
   min-width: 0 !important;
   height: 100dvh !important;
   max-height: 100dvh !important;
-  overflow: hidden !important;
-  overflow-y: hidden !important;
+  background: var(--surface, #ffffff) !important;
   z-index: 701 !important;
   transform: translateX(100%) !important;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.2) !important;
+  overflow: hidden !important;
 }
 .umd-drawer.open {
   transform: translateX(0) !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   🎯 YORIX CM - SPRINT 2 & 3 FIXES
-   Menu burger + FicheProduit + Cart + Dashboards + Checkout
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ─── 1. USER MENU DRAWER ───────────────────────────────────────────────── */
-.umd-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 700;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-}
-.umd-overlay.open {
-  opacity: 1;
-  pointer-events: all;
-}
-.umd-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: min(380px, 100vw);
-  height: 100vh;
-  height: 100dvh;
-  background: var(--surface, #ffffff);
-  z-index: 701;
-  transform: translateX(100%);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-}
-.umd-drawer.open {
-  transform: translateX(0);
 }
 .umd-header {
   background: linear-gradient(135deg, var(--green, #1a6b3a), #0f4a28);
@@ -4274,4 +4244,86 @@ textarea:focus-visible {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ✨ YORIX CM — PREMIUM DESIGN REFINEMENTS
+   Améliorations visuelles globales : navbar desktop, dashboard, cards
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Navbar desktop : hauteur fixe, pas de débordement */
+@media (min-width: 769px) {
+  .navbar {
+    height: 64px !important;
+    flex-wrap: nowrap !important;
+    overflow: visible !important;
+  }
+  .nav-actions {
+    flex-shrink: 0 !important;
+    flex-wrap: nowrap !important;
+  }
+  .nav-auth-desktop {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    flex-wrap: nowrap !important;
+  }
+  /* Cacher le burger sur desktop */
+  .user-menu-mobile {
+    display: none !important;
+  }
+  /* Rendre la barre de recherche plus élégante sur desktop */
+  .nav-search-wrap {
+    flex: 1 1 0 !important;
+    max-width: 480px !important;
+  }
+}
+
+/* Header sticky stack : fond cohérent, plus de "barre blanche" */
+.header-sticky-stack {
+  background: var(--surface) !important;
+}
+
+/* Navbar : fond blanc propre, ombre subtile */
+.navbar {
+  background: var(--surface) !important;
+}
+
+/* Pay-strip : alignement compact */
+@media (max-width: 768px) {
+  .pay-strip {
+    display: none !important;
+  }
+}
+
+/* Dashboard : premium cards */
+.dstat {
+  transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+.dstat:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--yorix-sh-md) !important;
+}
+
+/* Role chip — meilleure lisibilité */
+.role-chip {
+  font-size: 0.65rem !important;
+  letter-spacing: 0.02em !important;
+  padding: 4px 10px !important;
+}
+
+/* Boutons nav actions — transition premium */
+.btn-ghost,
+.btn-green,
+.btn-red {
+  transition: all 0.2s ease !important;
+}
+.btn-ghost:hover { border-color: var(--green) !important; color: var(--green) !important; }
+.btn-green:hover { filter: brightness(1.08) !important; transform: translateY(-1px) !important; }
+.btn-red:hover   { filter: brightness(1.08) !important; transform: translateY(-1px) !important; }
+
+/* Mobile nav : safe area bottom */
+.mobile-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
 `;
+
