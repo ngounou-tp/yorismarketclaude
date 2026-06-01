@@ -996,7 +996,7 @@ export default function YorixApp() {
   );
 
   const roleChipClass = () =>
-    ({ buyer:"chip-buyer", seller:"chip-seller", delivery:"chip-delivery", provider:"chip-provider", admin:"chip-admin" }[userRole] || "chip-buyer");
+    ({ buyer:"chip-buyer", seller:"chip-seller", delivery:"chip-delivery", provider:"chip-provider", admin:"chip-admin", admin_partner:"chip-admin", superadmin:"chip-admin" }[userRole] || "chip-buyer");
 
   const { t: tNav } = useTranslation("nav");
 
