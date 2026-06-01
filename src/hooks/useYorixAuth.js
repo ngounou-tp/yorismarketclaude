@@ -21,7 +21,13 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
 
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState("login");
-  const [selectedRole, setSelectedRole] = useState("buyer");
+  const [selectedRole, _setSelectedRole] = useState(
+    () => localStorage.getItem("yorix_pending_role") || "buyer"
+  );
+  const setSelectedRole = (role) => {
+    localStorage.setItem("yorix_pending_role", role);
+    _setSelectedRole(role);
+  };
   const [authForm, setAuthForm] = useState({ nom: "", email: "", tel: "", password: "" });
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -74,9 +80,23 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
       });
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_e, session) => {
+    } = supabase.auth.onAuthStateChange(async (_e, session) => {
       if (session?.user) {
         setUser(session.user);
+        const existing = await getUserProfile(session.user.id);
+        if (!existing) {
+          // New OAuth user — create profile with pending role
+          const pendingRole = localStorage.getItem("yorix_pending_role") || "buyer";
+          const meta = session.user.user_metadata || {};
+          await supabase.from("profiles").upsert({
+            id: session.user.id,
+            nom: meta.full_name || meta.name || meta.email || "",
+            email: session.user.email || "",
+            telephone: "",
+            role: pendingRole,
+            langue: "fr",
+          });
+        }
         chargerProfil(session.user.id);
       } else {
         setUser(null);
@@ -217,6 +237,8 @@ export function useYorixAuth({ goPage, setDashTab, setDemandeLivraisonOpen, setN
   };
 
   const doGoogle = async () => {
+    // Persist role so it survives the OAuth redirect
+    localStorage.setItem("yorix_pending_role", selectedRole);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.origin },

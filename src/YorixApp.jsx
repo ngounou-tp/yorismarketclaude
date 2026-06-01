@@ -542,7 +542,7 @@ export default function YorixApp() {
       buy:      { needAuth: false, page: "produits" },
       sell:     { needAuth: true,  role: "seller",   page: "dashboard" },
       service:  { needAuth: false, page: "prestataires" },
-      delivery: { needAuth: true,  role: "buyer",    action: "openDelivery" },
+      delivery: { needAuth: true,  role: "delivery", action: "openDelivery" },
     };
 
     const target = routes[actionId];
