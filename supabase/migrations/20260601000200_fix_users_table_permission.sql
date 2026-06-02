@@ -11,7 +11,7 @@ DO $$
 BEGIN
   IF to_regclass('public.users') IS NOT NULL THEN
     -- Réaccorder les droits SELECT pour que les fonctions puissent lire
-    EXECUTE 'GRANT SELECT ON public.users TO authenticated, anon, service_role';
+    EXECUTE 'GRANT SELECT ON public.users TO authenticated, service_role';
     RAISE NOTICE 'public.users existe — SELECT accordé à authenticated/anon/service_role';
   ELSE
     RAISE NOTICE 'public.users absent — rien à faire';

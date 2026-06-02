@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
             `${clientNom} · groupe ${orderGroupId} · ligne ${gross.toLocaleString("fr-FR")} FCFA (commission ${commission.toLocaleString("fr-FR")} F)`,
           link: "/dashboard",
           lu: false,
-          priority: "important",
+          priority: "high",
           category: "orders",
           payload: { order_id: order.id, checkout_intent_id: checkoutIntentId },
         });
@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
           `Votre commande ${orderGroupId} est enregistrée. Total TTC ${Math.round(Number(totals.total)).toLocaleString("fr-FR")} FCFA.`,
         link: "/dashboard",
         lu: false,
-        priority: "important",
+        priority: "high",
         category: "orders",
         payload: { checkout_intent_id: checkoutIntentId, order_group_id: orderGroupId },
       });
