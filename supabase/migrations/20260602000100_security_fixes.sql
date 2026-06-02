@@ -56,7 +56,6 @@ BEGIN
       USING (
         public.is_platform_admin()
         OR sender_id = auth.uid()
-        OR expediteur_id = auth.uid()
         OR EXISTS (
           SELECT 1 FROM public.conversations c
           WHERE c.id = messages.conversation_id
@@ -68,7 +67,6 @@ BEGIN
       ON public.messages FOR INSERT TO authenticated
       WITH CHECK (
         sender_id = auth.uid()
-        OR expediteur_id = auth.uid()
       );
 
     CREATE POLICY messages_update_sender_or_admin
@@ -76,12 +74,10 @@ BEGIN
       USING (
         public.is_platform_admin()
         OR sender_id = auth.uid()
-        OR expediteur_id = auth.uid()
       )
       WITH CHECK (
         public.is_platform_admin()
         OR sender_id = auth.uid()
-        OR expediteur_id = auth.uid()
       );
   END IF;
 END $$;
