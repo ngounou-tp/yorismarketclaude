@@ -5,6 +5,7 @@ async function callEdge(functionName, payload) {
     body: payload,
   });
   if (error) throw error;
+  if (data?.error) throw new Error(String(data.error));
   return data;
 }
 

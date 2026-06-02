@@ -172,7 +172,7 @@ async function insertSellerNotification(
     message,
     link,
     category: "business",
-    priority: "important",
+    priority: "high",
     metadata: {
       kind: "stock_alert",
       variant,

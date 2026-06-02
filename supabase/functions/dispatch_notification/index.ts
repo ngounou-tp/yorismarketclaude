@@ -70,11 +70,11 @@ function inferPriority(row: Record<string, unknown>, category: string): string {
   const type = String(row.type || "").toLowerCase();
   if (type === "new_product" || type === "pack_moderation" || type === "stock_alert") return "standard";
   if (category === "catalog" || category === "business" || category === "promotions") {
-    return category === "promotions" ? "promo" : "standard";
+    return "standard";
   }
   if (category === "payments" || category === "security") return "critical";
-  if (category === "admin") return "important";
-  if (category === "delivery" || category === "orders" || category === "messages") return "important";
+  if (category === "admin") return "high";
+  if (category === "delivery" || category === "orders" || category === "messages") return "high";
   return "standard";
 }
 
