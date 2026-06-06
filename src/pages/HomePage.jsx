@@ -280,8 +280,8 @@ export function HomePage({
                     <div className="yhm3-hero-stat-lbl">Support</div>
                   </div>
                   <div>
-                    <div className="yhm3-hero-stat-val">5%</div>
-                    <div className="yhm3-hero-stat-lbl">Commission</div>
+                    <div className="yhm3-hero-stat-val">100%</div>
+                    <div className="yhm3-hero-stat-lbl">Mobile money</div>
                   </div>
                   <div>
                     <div className="yhm3-hero-stat-val">5</div>
