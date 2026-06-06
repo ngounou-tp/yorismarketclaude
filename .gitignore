@@ -31,3 +31,4 @@ mobile/ios/.generated/
 .env.local
 .env.*.local
 supabase/.env
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/
