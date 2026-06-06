@@ -3,7 +3,7 @@
 //  classe home-premium pour hovers ProdGrid, CSS externe + reduced-motion)
 // ═══════════════════════════════════════════════════════════════
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { FlashCountdown } from "../components/FlashCountdown";
 import { ProdGrid } from "../components/ProdGrid";
 import { CITIES } from "../lib/constants";
@@ -159,6 +159,27 @@ export function HomePage({
 
   const th = Number(freeShippingThresholdXaf) || 50000;
 
+  // ── Scroll-reveal : active tous les .yx-reveal de la page d'accueil
+  const homeRef = useRef(null);
+  useEffect(() => {
+    const container = homeRef.current;
+    if (!container) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      container.querySelectorAll(".yx-reveal").forEach((el) => el.classList.add("is-in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+      }),
+      { threshold: 0.05, rootMargin: "60px 0px 0px 0px" }
+    );
+    const tid = setTimeout(() => {
+      container.querySelectorAll(".yx-reveal").forEach((el) => io.observe(el));
+    }, 50);
+    return () => { clearTimeout(tid); io.disconnect(); };
+  }, []);
+
   const submitNewsletter = async () => {
     const email = nlEmail?.trim();
     if (!email || !email.includes("@")) return;
@@ -175,7 +196,7 @@ export function HomePage({
     <>
       <style>{homePremiumCss}</style>
 
-      <div className="home-premium yorix-home-v3 anim">
+      <div className="home-premium yorix-home-v3 anim" ref={homeRef}>
         <div className="yhm3-marquee" role="region" aria-label="Avantages Yorix">
           <div className="yhm3-marquee-track">
             {[...TRUST_BADGES, ...TRUST_BADGES].map((b, i) => (
