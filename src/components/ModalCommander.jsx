@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createCheckoutIntent, confirmCheckout } from "../lib/checkoutApi";
+import { creerCommandeSupabase } from "../utils/helpers";
 import { showAppToast } from "../lib/appToast";
 
 // ─────────────────────────────────────────────────────────────
@@ -25,6 +26,7 @@ export function ModalCommander({ product, user, userData, onClose, onSuccess }) 
     if (!validate()) return;
     setLoading(true);
     try {
+      // ── Tentative via Edge Functions
       const subtotal = Number(product?.prix || 0);
       const intent = await createCheckoutIntent({
         checkoutType: "product_only",
@@ -59,13 +61,36 @@ export function ModalCommander({ product, user, userData, onClose, onSuccess }) 
         : [];
       setDeliveryTracking(codes);
       setDone(true);
-      setTimeout(() => {
-        onSuccess?.();
-        onClose();
-      }, codes.length > 0 ? 5000 : 2000);
-    } catch (err) {
-      console.error("creerCommande:", err);
-      showAppToast("Erreur lors de la commande : " + err.message, "error");
+      setTimeout(() => { onSuccess?.(); onClose(); }, codes.length > 0 ? 5000 : 2000);
+    } catch (edgeFnErr) {
+      // ── Fallback : insertion directe en base (Edge Functions non déployées)
+      const errMsg = edgeFnErr?.message || "";
+      const isEdgeUnavailable =
+        errMsg.includes("Edge Function") ||
+        errMsg.includes("Failed to send") ||
+        errMsg.includes("FunctionsHttpError") ||
+        errMsg.includes("FunctionsRelayError") ||
+        errMsg.includes("404") ||
+        errMsg.includes("fetch");
+
+      if (isEdgeUnavailable) {
+        try {
+          await creerCommandeSupabase({
+            product,
+            clientNom: nom.trim(),
+            telephone: tel.trim(),
+            userId: user?.id || null,
+          });
+          setDone(true);
+          setTimeout(() => { onSuccess?.(); onClose(); }, 2000);
+        } catch (fallbackErr) {
+          console.error("commander fallback:", fallbackErr);
+          showAppToast("Erreur lors de la commande : " + fallbackErr.message, "error");
+        }
+      } else {
+        console.error("creerCommande:", edgeFnErr);
+        showAppToast("Erreur lors de la commande : " + errMsg, "error");
+      }
     }
     setLoading(false);
   };
