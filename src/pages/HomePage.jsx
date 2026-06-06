@@ -3,7 +3,7 @@
 //  classe home-premium pour hovers ProdGrid, CSS externe + reduced-motion)
 // ═══════════════════════════════════════════════════════════════
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { FlashCountdown } from "../components/FlashCountdown";
 import { ProdGrid } from "../components/ProdGrid";
 import { CITIES } from "../lib/constants";
@@ -159,6 +159,27 @@ export function HomePage({
 
   const th = Number(freeShippingThresholdXaf) || 50000;
 
+  // ── Scroll-reveal : active tous les .yx-reveal de la page d'accueil
+  const homeRef = useRef(null);
+  useEffect(() => {
+    const container = homeRef.current;
+    if (!container) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      container.querySelectorAll(".yx-reveal").forEach((el) => el.classList.add("is-in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+      }),
+      { threshold: 0.05, rootMargin: "60px 0px 0px 0px" }
+    );
+    const tid = setTimeout(() => {
+      container.querySelectorAll(".yx-reveal").forEach((el) => io.observe(el));
+    }, 50);
+    return () => { clearTimeout(tid); io.disconnect(); };
+  }, []);
+
   const submitNewsletter = async () => {
     const email = nlEmail?.trim();
     if (!email || !email.includes("@")) return;
@@ -175,7 +196,7 @@ export function HomePage({
     <>
       <style>{homePremiumCss}</style>
 
-      <div className="home-premium yorix-home-v3 anim">
+      <div className="home-premium yorix-home-v3 anim" ref={homeRef}>
         <div className="yhm3-marquee" role="region" aria-label="Avantages Yorix">
           <div className="yhm3-marquee-track">
             {[...TRUST_BADGES, ...TRUST_BADGES].map((b, i) => (
@@ -207,12 +228,12 @@ export function HomePage({
                   <strong> MTN MoMo / Orange Money</strong> — un parcours rapide, mobile et rassurant.
                 </p>
 
-                <div className="yhm3-hero-ctas">
+                <div className="yhm3-hero-ctas yx-reveal yx-reveal-d2">
                   <button type="button" className="yhm3-btn yhm3-btn--pri" onClick={() => setOnboardingOpen(true)}>
-                    🚀 Acheter ou vendre · 30 s
+                    Acheter ou vendre
                   </button>
                   <button type="button" className="yhm3-btn yhm3-btn--sec" onClick={() => goPage("produits")}>
-                    Voir les produits
+                    Voir le catalogue
                   </button>
                   <button
                     type="button"
@@ -229,15 +250,24 @@ export function HomePage({
                   </button>
                 </div>
 
-                <ul className="yhm3-hero-trust">
+                <ul className="yhm3-hero-trust yx-reveal yx-reveal-d3">
                   <li>
-                    <span aria-hidden>⭐</span> Avis transparents
+                    <span aria-hidden>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--hm-green)" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    </span>
+                    Avis transparents
                   </li>
                   <li>
-                    <span aria-hidden>🛡️</span> Paiements sécurisés
+                    <span aria-hidden>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--hm-green)" strokeWidth="2.2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </span>
+                    Paiements sécurisés
                   </li>
                   <li>
-                    <span aria-hidden>📦</span> Vendeurs actifs
+                    <span aria-hidden>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--hm-green)" strokeWidth="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    </span>
+                    Vendeurs actifs
                   </li>
                 </ul>
 
@@ -378,7 +408,7 @@ export function HomePage({
         />
 
         <section className="yhm3-section">
-          <div className="yhm3-section-head yhm3-section-head--center">
+          <div className="yhm3-section-head yhm3-section-head--center yx-reveal">
             <span className="yhm3-eyebrow-light">Accès rapides</span>
             <h2 className="yhm3-h2 yhm3-h2--center">
               Tout ce dont vous avez <em>besoin</em>
@@ -389,11 +419,11 @@ export function HomePage({
           </div>
 
           <div className="yhm3-cats-grid">
-            {QUICK_LINKS.map((l) => (
+            {QUICK_LINKS.map((l, i) => (
               <button
                 key={l.key}
                 type="button"
-                className="yhm3-cat-card"
+                className={`yhm3-cat-card yx-reveal yx-reveal-d${Math.min(i + 1, 4)}`}
                 style={{ "--cat-color": l.color }}
                 onClick={() => goPage(l.key)}
               >
@@ -525,10 +555,10 @@ export function HomePage({
           </div>
 
           <div className="yhm3-bento">
-            {ECOSYSTEM.map((e) => (
+            {ECOSYSTEM.map((e, i) => (
               <article
                 key={e.key}
-                className={`yhm3-bento-card${e.wide ? " yhm3-bento-card--wide" : ""}`}
+                className={`yhm3-bento-card${e.wide ? " yhm3-bento-card--wide" : ""} yx-reveal yx-reveal-d${Math.min(i + 1, 4)}`}
                 onClick={() => goPage(e.key)}
                 role="link"
                 tabIndex={0}
@@ -562,8 +592,8 @@ export function HomePage({
           </div>
 
           <div className="yhm3-why-grid">
-            {WHY.map((w) => (
-              <article key={w.title} className="yhm3-why-card">
+            {WHY.map((w, i) => (
+              <article key={w.title} className={`yhm3-why-card yx-reveal yx-reveal-d${Math.min(i + 1, 4)}`}>
                 <div className="yhm3-why-icon">{w.icon}</div>
                 <h3>{w.title}</h3>
                 <p>{w.desc}</p>
@@ -613,8 +643,8 @@ export function HomePage({
           </div>
 
           <div className="yhm3-stories">
-            {TESTIMONIALS.map((t) => (
-              <figure key={t.author} className="yhm3-story" style={{ "--story-color": t.color }}>
+            {TESTIMONIALS.map((t, i) => (
+              <figure key={t.author} className={`yhm3-story yx-reveal yx-reveal-d${Math.min(i + 1, 4)}`} style={{ "--story-color": t.color }}>
                 <blockquote className="yhm3-story-quote">&ldquo;{t.quote}&rdquo;</blockquote>
                 <figcaption className="yhm3-story-foot">
                   <div className="yhm3-story-av">{t.avatar}</div>

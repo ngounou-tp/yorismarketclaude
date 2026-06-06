@@ -23,11 +23,15 @@ export default defineConfig(({ mode }) => {
     build: {
       target: "es2020",
       chunkSizeWarningLimit: 680,
+      cssCodeSplit: true,
+      reportCompressedSize: false,
       rollupOptions: {
         output: {
-          manualChunks: {
-            react: ["react", "react-dom"],
-            supabase: ["@supabase/supabase-js"],
+          manualChunks(id) {
+            if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) return "react";
+            if (id.includes("node_modules/@supabase")) return "supabase";
+            if (id.includes("node_modules/i18next") || id.includes("node_modules/react-i18next")) return "i18n";
+            if (id.includes("node_modules/react-router")) return "router";
           },
         },
       },

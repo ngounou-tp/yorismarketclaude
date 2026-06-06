@@ -158,6 +158,32 @@ export function CountUp({ value, suffix = "", prefix = "", className = "", durat
   );
 }
 
+// ─── 6b) useInViewClass — adds a CSS class when element enters viewport ───────
+// Usage: const ref = useInViewClass("is-in"); <div ref={ref} className="yx-reveal">
+export function useInViewClass(className = "is-in", threshold = 0.15) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      el.classList.add(className);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add(className);
+          io.unobserve(el);
+        }
+      },
+      { threshold, rootMargin: "0px 0px -30px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [className, threshold]);
+  return ref;
+}
+
 // ─── 6) Tilt 3D ultra-léger au pointeur (cartes premium) ────────────────────
 export function useTilt({ max = 6 } = {}) {
   const ref = useRef(null);

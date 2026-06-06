@@ -29,15 +29,22 @@ export function BuyerDashboard({ user, userData, wishlist, totalQty, loyaltyPts,
           </div>
           <div className="dash-stats">
             {[
-              { icon: "📦", val: mesCommandes.length, lbl: "Commandes" },
-              { icon: "❤️", val: wishlist.size,       lbl: "Favoris" },
-              { icon: "🛒", val: totalQty,            lbl: "Panier" },
-              { icon: "🌟", val: `${loyaltyPts} pts`, lbl: "Points fidélité" },
+              { icon: "📦", val: mesCommandes.length, lbl: "Commandes", trend: mesCommandes.length > 0 ? "↑ Actif" : "— Aucune" },
+              { icon: "❤️", val: wishlist.size,       lbl: "Favoris",   trend: wishlist.size > 0 ? `${wishlist.size} sauvegardé${wishlist.size > 1 ? "s" : ""}` : "— Vide" },
+              { icon: "🛒", val: totalQty,            lbl: "Panier",    trend: totalQty > 0 ? "↑ En cours" : "— Vide" },
+              { icon: "🌟", val: `${loyaltyPts} pts`, lbl: "Points fidélité", trend: loyaltyPts > 0 ? "↑ Cumulés" : "— Démarrer" },
             ].map(s => (
               <div key={s.lbl} className="dstat">
                 <div className="dstat-icon">{s.icon}</div>
                 <div className="dstat-val">{s.val}</div>
                 <div className="dstat-lbl">{s.lbl}</div>
+                {s.trend && (
+                  <div className="dstat-trend" style={{
+                    fontSize: ".65rem", fontWeight: 600, marginTop: 4,
+                    color: s.trend.startsWith("↑") ? "var(--green)" : "var(--ink-light,#888)",
+                    letterSpacing: ".02em",
+                  }}>{s.trend}</div>
+                )}
               </div>
             ))}
           </div>

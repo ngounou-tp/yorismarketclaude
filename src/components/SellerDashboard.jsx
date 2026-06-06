@@ -484,15 +484,22 @@ export function SellerDashboard({
 
           <div className="dash-stats">
             {[
-              { icon: "📦", val: mesProduits.length, lbl: t("stats.published") },
-              { icon: "🛒", val: commandesActives, lbl: t("stats.activeOrders") },
-              { icon: "✅", val: mesCommandes.filter(c => c.status === "delivered").length, lbl: t("stats.delivered") },
-              { icon: "💰", val: `${revenusTotal.toLocaleString("fr-FR")} FCFA`, lbl: t("stats.netRevenue") },
+              { icon: "📦", val: mesProduits.length, lbl: t("stats.published"), trend: mesProduits.length > 0 ? "↑ En ligne" : "— Aucun" },
+              { icon: "🛒", val: commandesActives, lbl: t("stats.activeOrders"), trend: commandesActives > 0 ? "↑ À traiter" : "— Aucune" },
+              { icon: "✅", val: mesCommandes.filter(c => c.status === "delivered").length, lbl: t("stats.delivered"), trend: mesCommandes.filter(c => c.status === "delivered").length > 0 ? "↑ Livrées" : "— Aucune" },
+              { icon: "💰", val: `${revenusTotal.toLocaleString("fr-FR")} FCFA`, lbl: t("stats.netRevenue"), trend: revenusTotal > 0 ? "↑ Revenus" : "— Démarrer" },
             ].map(s => (
               <div key={s.lbl} className="dstat">
                 <div className="dstat-icon">{s.icon}</div>
                 <div className="dstat-val">{s.val}</div>
                 <div className="dstat-lbl">{s.lbl}</div>
+                {s.trend && (
+                  <div className="dstat-trend" style={{
+                    fontSize: ".65rem", fontWeight: 600, marginTop: 4,
+                    color: s.trend.startsWith("↑") ? "var(--green)" : "var(--ink-light,#888)",
+                    letterSpacing: ".02em",
+                  }}>{s.trend}</div>
+                )}
               </div>
             ))}
           </div>
