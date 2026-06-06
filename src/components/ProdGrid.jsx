@@ -198,7 +198,7 @@ export function ProdGrid({
               {/* ── BOUTON PANIER ── */}
               <div className="prod-actions" style={{ padding: "0 11px 11px", display: "flex", flexDirection: "column", gap: 6 }}>
                 <button
-                  className="add-btn"
+                  className="add-btn-full"
                   disabled={!buyable}
                   aria-disabled={!buyable}
                   style={{

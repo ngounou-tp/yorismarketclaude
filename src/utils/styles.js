@@ -5120,7 +5120,7 @@ html{scroll-behavior:smooth;}
 .badge-promo{background:rgba(245,158,11,.1)!important;color:#92400e!important;border:1px solid rgba(245,158,11,.2)!important;}
 .badge-flash{background:rgba(239,68,68,.1)!important;color:#991b1b!important;border:1px solid rgba(239,68,68,.2)!important;}
 .badge-best{background:rgba(139,92,246,.1)!important;color:#4c1d95!important;border:1px solid rgba(139,92,246,.2)!important;}
-/* Add button in price row */
+/* Add button in price row (small + icon) */
 .add-btn{
   width:36px!important;height:36px!important;
   border-radius:10px!important;
@@ -5136,6 +5136,18 @@ html{scroll-behavior:smooth;}
 }
 .add-btn:hover:not([disabled]){transform:scale(1.1)!important;box-shadow:0 4px 12px rgba(26,107,58,.3)!important;}
 .add-btn:disabled{background:var(--surface2)!important;color:var(--gray)!important;}
+/* Add button full-width (Ajouter au panier) */
+.add-btn-full{
+  border-radius:10px!important;
+  border:none!important;
+  cursor:pointer;
+  font-family:'Syne',sans-serif!important;
+  font-weight:700!important;
+  transition:filter .15s,transform .15s!important;
+}
+.add-btn-full:hover:not([disabled]){filter:brightness(1.07)!important;transform:translateY(-1px)!important;}
+.add-btn-full:active:not([disabled]){transform:translateY(0)!important;}
+.add-btn-full:disabled{cursor:not-allowed!important;}
 /* Price */
 .price{font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:.95rem!important;color:var(--ink)!important;}
 .price-unit{font-size:.72rem!important;font-weight:600!important;color:var(--gray)!important;margin-left:1px;}
