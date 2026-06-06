@@ -224,7 +224,7 @@ export function YorixHeader({
               </div>
             )}
             <button type="button" onClick={() => goPage("produits")} aria-label={t("search.ariaSubmit")}>
-              🔍
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             </button>
           </div>
         </div>
@@ -235,7 +235,11 @@ export function YorixHeader({
           </button>
 
           <button type="button" className="dark-toggle" onClick={() => setDark((d) => !d)} title={dark ? t("actions.lightMode") : t("actions.darkMode")}>
-            {dark ? "☀️" : "🌙"}
+            {dark ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            )}
           </button>
 
           {user && (
@@ -252,7 +256,7 @@ export function YorixHeader({
           )}
 
           <button type="button" className="icon-btn" onClick={openCart} title={t("actions.cart")}>
-            🛒
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             {totalQty > 0 && <span className="ibadge">{totalQty}</span>}
           </button>
 
@@ -263,7 +267,9 @@ export function YorixHeader({
               aria-label={user ? t("actions.mySpace") : t("topbar.login")}
               onClick={onOpenUserMenu}
             >
-              {user ? (userData?.nom || user.email || "?")[0].toUpperCase() : "☰"}
+              {user ? (userData?.nom || user.email || "?")[0].toUpperCase() : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              )}
             </button>
           </div>
 
@@ -278,7 +284,7 @@ export function YorixHeader({
                     setAuthOpen(true);
                   }}
                 >
-                  🔑 Connexion
+                  Connexion
                 </button>
                 <button
                   type="button"
@@ -289,7 +295,7 @@ export function YorixHeader({
                     setAuthOpen(true);
                   }}
                 >
-                  🚀 {t("actions.register")}
+                  {t("actions.register")}
                 </button>
               </>
             ) : (
@@ -299,7 +305,7 @@ export function YorixHeader({
                   {(userData?.nom || user.email || "?")[0].toUpperCase()}
                 </div>
                 <button type="button" className="btn-red" onClick={doLogout} title={t("actions.logout")}>
-                  🚪 {t("actions.logout")}
+                  {t("actions.logout")}
                 </button>
               </>
             )}
@@ -325,7 +331,8 @@ export function YorixHeader({
         </nav>
         <div className="nav-quick-wrap">
           <button type="button" className="nav-quick-btn" aria-expanded={navQuickOpen} onClick={() => setNavQuickOpen((o) => !o)}>
-            ☰ {t("actions.navigation")}
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            {t("actions.navigation")}
           </button>
           {navQuickOpen && (
             <div className="nav-quick-panel" role="dialog" aria-label={t("actions.navDialog")}>
