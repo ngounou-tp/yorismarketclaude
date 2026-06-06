@@ -237,7 +237,7 @@ export function HomePage({
                   </button>
                   <button
                     type="button"
-                    className="yhm3-btn yhm3-btn--sec"
+                    className="yhm3-btn yhm3-btn--wa"
                     onClick={() =>
                       window.open(
                         `https://wa.me/${YORIX_WA_NUMBER}?text=${encodeURIComponent("Bonjour Yorix ! Je veux commander rapidement.")}`,
@@ -246,30 +246,29 @@ export function HomePage({
                       )
                     }
                   >
-                    Commander WhatsApp
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{flexShrink:0}}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Commander via WhatsApp
                   </button>
                 </div>
 
-                <ul className="yhm3-hero-trust yx-reveal yx-reveal-d3">
-                  <li>
-                    <span aria-hidden>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--hm-green)" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    </span>
-                    Avis transparents
-                  </li>
-                  <li>
-                    <span aria-hidden>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--hm-green)" strokeWidth="2.2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </span>
+                <div className="yhm3-hero-trust yx-reveal yx-reveal-d3">
+                  <div className="yhm3-trust-pill">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--hm-yellow)" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Avis vérifiés
+                  </div>
+                  <div className="yhm3-trust-pill">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     Paiements sécurisés
-                  </li>
-                  <li>
-                    <span aria-hidden>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--hm-green)" strokeWidth="2.2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                    </span>
-                    Vendeurs actifs
-                  </li>
-                </ul>
+                  </div>
+                  <div className="yhm3-trust-pill">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    Vendeurs vérifiés
+                  </div>
+                  <div className="yhm3-trust-pill">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    MoMo &amp; Orange Money
+                  </div>
+                </div>
 
                 <div className="yhm3-hero-stats">
                   <div>
@@ -281,20 +280,27 @@ export function HomePage({
                     <div className="yhm3-hero-stat-lbl">Support</div>
                   </div>
                   <div>
-                    <div className="yhm3-hero-stat-val">100%</div>
-                    <div className="yhm3-hero-stat-lbl">Mobile money</div>
+                    <div className="yhm3-hero-stat-val">5%</div>
+                    <div className="yhm3-hero-stat-lbl">Commission</div>
                   </div>
                   <div>
-                    <div className="yhm3-hero-stat-val">1</div>
-                    <div className="yhm3-hero-stat-lbl">Écosystème</div>
+                    <div className="yhm3-hero-stat-val">5</div>
+                    <div className="yhm3-hero-stat-lbl">Univers</div>
                   </div>
                 </div>
               </div>
 
               <aside className="yhm3-search-panel" aria-label="Recherche rapide">
+                <div className="yhm3-search-trust-bar">
+                  <span className="yhm3-search-trust-dot" />
+                  <span>Catalogue en ligne · mis à jour en temps réel</span>
+                </div>
                 <div className="yhm3-search-head">
-                  <div className="yhm3-search-title">Trouver en quelques secondes</div>
-                  <p className="yhm3-search-sub">Filtres synchronisés avec le catalogue.</p>
+                  <div className="yhm3-search-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--hm-green)" strokeWidth="2.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Trouver en quelques secondes
+                  </div>
+                  <p className="yhm3-search-sub">Filtres synchronisés avec le catalogue live.</p>
                 </div>
 
                 <div className="yhm3-search-row">
@@ -364,15 +370,39 @@ export function HomePage({
                   ))}
                 </div>
 
-                <ul className="yhm3-search-perks">
-                  <li>
-                    Livraison offerte dès <strong>{th.toLocaleString("fr-FR")} FCFA</strong> ·{" "}
-                    <button type="button" onClick={() => goPage("bonsPlans")}>
-                      Détails offre
-                    </button>
-                  </li>
-                  <li>Commission plateforme jamais affichée au client final.</li>
-                </ul>
+                <div className="yhm3-search-perks">
+                  <div className="yhm3-perk-item">
+                    <div className="yhm3-perk-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    </div>
+                    <div>
+                      Livraison offerte dès{" "}
+                      <strong>{th.toLocaleString("fr-FR")} FCFA</strong>
+                      {" · "}
+                      <button type="button" onClick={() => goPage("bonsPlans")}>
+                        Détails
+                      </button>
+                    </div>
+                  </div>
+                  <div className="yhm3-perk-item">
+                    <div className="yhm3-perk-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    </div>
+                    <div>Paiement MTN MoMo &amp; Orange Money accepté</div>
+                  </div>
+                  <div className="yhm3-perk-item">
+                    <div className="yhm3-perk-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div>Escrow protection · paiement à la livraison</div>
+                  </div>
+                  <div className="yhm3-perk-item">
+                    <div className="yhm3-perk-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <div>Support WhatsApp 7j/7 · réponse rapide</div>
+                  </div>
+                </div>
               </aside>
             </div>
           </div>
