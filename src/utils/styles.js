@@ -4465,6 +4465,11 @@ textarea:focus-visible {
 /* ── PROD CARD SKELETON — match new height ── */
 .skeleton-img{height:180px !important;}
 
+/* ── FICHE PRODUIT — sticky mobile CTA ── */
+@media(max-width:768px){
+  .fp-sticky-cta{display:flex !important;}
+}
+
 /* ── FOCUS VISIBLE — accessibility ── */
 :focus-visible{outline:2px solid var(--green);outline-offset:2px;}
 button:focus-visible,a:focus-visible{outline:2px solid var(--green);outline-offset:2px;}

@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { OptimizedImage } from "./OptimizedImage";
 import { MadeInCameroonBadge } from "./MadeInCameroonBadge";
 import { resolveMadeInCameroon } from "../lib/madeInCameroon";
@@ -30,6 +30,18 @@ export function ProdGrid({
 }) {
   const [ficheOpen, setFicheOpen] = useState(null);
   const [cmdOpen, setCmdOpen]     = useState(null);
+  const [addedIds, setAddedIds]   = useState(new Set());
+
+  const handleAdd = useCallback((p) => {
+    if (!isPurchasable(p)) return;
+    onAddToCart(p);
+    setAddedIds((prev) => {
+      const next = new Set(prev);
+      next.add(p.id);
+      setTimeout(() => setAddedIds((s) => { const c = new Set(s); c.delete(p.id); return c; }), 1200);
+      return next;
+    });
+  }, [onAddToCart]);
 
   // ── Image sécurisée
   const getSafeImg = (p) => {
@@ -169,7 +181,7 @@ export function ProdGrid({
                     aria-disabled={!buyable}
                     title={buyable ? "Ajouter au panier" : "Produit indisponible"}
                     style={!buyable ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
-                    onClick={e => { e.stopPropagation(); if (buyable) onAddToCart(p); }}
+                    onClick={e => { e.stopPropagation(); handleAdd(p); }}
                   >
                     +
                   </button>
@@ -185,16 +197,18 @@ export function ProdGrid({
                   style={{
                     width: "100%", padding: "8px", borderRadius: 8, fontSize: ".78rem",
                     fontFamily: "'Syne',sans-serif", fontWeight: 700,
-                    background: buyable ? "var(--green)" : "var(--surface2)",
+                    background: addedIds.has(p.id) ? "#0f4a28" : buyable ? "var(--green)" : "var(--surface2)",
                     color: buyable ? "#fff" : "var(--gray)",
                     border: buyable ? "none" : "1px solid var(--border)",
                     cursor: buyable ? "pointer" : "not-allowed",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                     opacity: buyable ? 1 : 0.75,
+                    transform: addedIds.has(p.id) ? "scale(.97)" : "none",
+                    transition: "background .2s, transform .15s",
                   }}
-                  onClick={e => { e.stopPropagation(); if (buyable) onAddToCart(p); }}
+                  onClick={e => { e.stopPropagation(); handleAdd(p); }}
                 >
-                  {buyable ? "🛒 Ajouter au panier" : "❌ Produit indisponible"}
+                  {addedIds.has(p.id) ? "✅ Ajouté !" : buyable ? "🛒 Ajouter au panier" : "❌ Produit indisponible"}
                 </button>
                 {showShare && (
                   <button

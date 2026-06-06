@@ -452,6 +452,50 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
           </div>
         )}
       </div>
+
+      {/* ═══ STICKY MOBILE CTA BAR ═══ */}
+      {buyable && (
+        <div style={{
+          position: "fixed", bottom: "calc(env(safe-area-inset-bottom, 0px) + 72px)",
+          left: 0, right: 0,
+          display: "none",
+          zIndex: 600,
+          padding: "10px 16px",
+          background: "var(--surface)",
+          borderTop: "1px solid var(--border)",
+          boxShadow: "0 -8px 28px rgba(0,0,0,.1)",
+          gap: 10,
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
+        className="fp-sticky-cta"
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: ".82rem", color: "var(--green)", lineHeight: 1 }}>
+              {(isPromoActive(product) ? effectiveProductPrice(product) : product.prix)?.toLocaleString()} FCFA
+            </div>
+            <div style={{ fontSize: ".65rem", color: "var(--gray)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {product.name_fr}
+            </div>
+          </div>
+          {onAddToCart && (
+            <button
+              className="btn-cmd-sm"
+              onClick={() => { onAddToCart(product); onClose(); }}
+              style={{ flex: "none", padding: "11px 20px", borderRadius: 10, fontSize: ".82rem", fontWeight: 800 }}
+            >
+              🛒 Panier
+            </button>
+          )}
+          <button
+            className="btn-cmd-sm"
+            onClick={() => setShowCmdModal(true)}
+            style={{ flex: "none", padding: "11px 20px", borderRadius: 10, background: "#0f4a28", fontSize: ".82rem", fontWeight: 800 }}
+          >
+            ✅ Commander
+          </button>
+        </div>
+      )}
     </div>
   );
 }

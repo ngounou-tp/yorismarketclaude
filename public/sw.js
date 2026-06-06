@@ -1,5 +1,5 @@
 /* Yorix CM — Service worker : shell cache + push + navigation fallback */
-const CACHE = "yorix-sw-v2";
+const CACHE = "yorix-sw-v3";
 const OFFLINE = "/offline.html";
 const PRECACHE = ["/", OFFLINE, "/favicon.svg", "/manifest.json"];
 

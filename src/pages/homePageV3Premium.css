@@ -1397,3 +1397,159 @@
     display: none !important;
   }
 }
+
+/* ── PHASE 5 : SCROLL REVEAL + PREMIUM POLISH ── */
+
+/* Reveal base */
+.yx-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1);
+}
+.yx-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+.yx-reveal--up { transform: translateY(28px); }
+.yx-reveal--left { transform: translateX(-24px); }
+.yx-reveal--right { transform: translateX(24px); }
+.yx-reveal--scale { transform: scale(0.94); }
+.yx-reveal-d1 { transition-delay: 60ms; }
+.yx-reveal-d2 { transition-delay: 120ms; }
+.yx-reveal-d3 { transition-delay: 180ms; }
+.yx-reveal-d4 { transition-delay: 240ms; }
+
+/* Skip all reveals when prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .yx-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
+
+/* KPI numbers — count-up shimmer */
+.yhm3-kpi {
+  position: relative;
+  overflow: hidden;
+}
+.yhm3-kpi::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
+  transform: skewX(-15deg) translateX(-120%);
+  transition: transform .6s ease;
+  pointer-events: none;
+}
+.yhm3-kpi:hover::after {
+  transform: skewX(-15deg) translateX(120%);
+}
+
+/* Trust marquee — premium gradient fade edges */
+.yhm3-marquee::before,
+.yhm3-marquee::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+.yhm3-marquee::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--hm-green-deep), transparent);
+}
+.yhm3-marquee::after {
+  right: 0;
+  background: linear-gradient(-90deg, var(--hm-green-deep), transparent);
+}
+
+/* Bento cards — top accent on hover */
+.yhm3-bento-card {
+  border-top: 3px solid transparent;
+  transition: border-color .25s, transform .25s, box-shadow .25s !important;
+}
+.yhm3-bento-card:hover {
+  border-top-color: var(--hm-green);
+}
+
+/* Category tiles — subtle scale */
+.yhm3-cat-tile {
+  transition: transform .2s cubic-bezier(0.34,1.56,0.64,1), box-shadow .2s, border-color .2s !important;
+}
+.yhm3-cat-tile:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+}
+
+/* Testimonials — hover lift */
+.yhm3-quote-card {
+  transition: transform .22s, box-shadow .22s, border-color .22s !important;
+}
+.yhm3-quote-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,.12) !important;
+  border-color: rgba(26,107,58,.25) !important;
+}
+
+/* Quick link chips — spring pop */
+.yhm3-quick-chip {
+  transition: transform .2s cubic-bezier(0.34,1.56,0.64,1), background .2s, border-color .2s !important;
+}
+.yhm3-quick-chip:hover {
+  transform: translateY(-3px) scale(1.04) !important;
+}
+
+/* Hero search button — premium */
+.yhm3-search-btn {
+  transition: filter .15s, transform .15s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+.yhm3-search-btn:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Section headings — gradient underline */
+.yhm3-section-title {
+  position: relative;
+  display: inline-block;
+}
+.yhm3-section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 36px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--hm-green), var(--hm-yellow));
+  border-radius: 2px;
+}
+
+/* Hero h1 — gradient em highlight */
+.yhm3-h1 em {
+  background: linear-gradient(135deg, #7ef0a8 0%, #4fd17d 50%, #b7e4c7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-style: normal;
+}
+
+/* Buttons — consistent spring */
+.yhm3-btn {
+  transition: filter .18s, transform .18s cubic-bezier(0.34,1.56,0.64,1), box-shadow .18s !important;
+}
+.yhm3-btn:hover {
+  transform: translateY(-2px) !important;
+}
+.yhm3-btn:active {
+  transform: translateY(0) scale(.97) !important;
+}
+
+/* FAQ accordeon — smooth reveal */
+.yhm3-faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s cubic-bezier(0.16,1,0.3,1), opacity .25s;
+  opacity: 0;
+}
+.yhm3-faq-answer.open {
+  max-height: 400px;
+  opacity: 1;
+}
