@@ -6,6 +6,7 @@ import { ROLE_LABELS } from "../../lib/constants";
 import { isAdminViewer, canWriteAdmin } from "../../lib/roles";
 import { SeoLocalIntro } from "../seo/SeoLocalIntro";
 import { ChatUsers } from "../ChatUsers";
+import { ProductDetailSkeleton } from "../SkeletonCard";
 import {
   RouteSuspenseFallback,
   LazyHomePage,
@@ -185,11 +186,9 @@ export function YorixPages({ ctx }) {
       {page === "productDetail" && (
         <div className="anim">
           {detailProductLoading ? (
-            <div className="loading" style={{ minHeight: 320, justifyContent: "center" }}>
-              <div className="spinner" /> Chargement du produit...
-            </div>
+            <ProductDetailSkeleton />
           ) : detailProduct ? (
-            <Suspense fallback={<RouteSuspenseFallback minHeight={320} label="Chargement du produit..." />}>
+            <Suspense fallback={<ProductDetailSkeleton />}>
               <LazyFicheProduit
                 product={detailProduct}
                 user={user}

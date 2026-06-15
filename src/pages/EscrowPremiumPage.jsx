@@ -1324,10 +1324,16 @@ export function EscrowPremiumPage({
           </div>
 
           {produitsLoading ? (
-            <div className="yesc3-loading">
-              <div className="yesc3-spinner" />
-              Chargement des produits...
-            </div>
+            <ProdGrid
+              prods={[]}
+              user={user}
+              userData={userData}
+              onAddToCart={addToCart}
+              onWish={toggleWish}
+              wishlist={wishlist}
+              onOpenProductUrl={openProductUrl}
+              loading
+            />
           ) : escrowProds.length === 0 ? (
             <div className="yesc3-empty">
               <div className="yesc3-empty-ico">📦</div>

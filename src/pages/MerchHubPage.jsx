@@ -50,7 +50,16 @@ export function MerchHubPage({
       </header>
 
       {produitsLoading ? (
-        <div className="mhub-loading">Chargement…</div>
+        <ProdGrid
+          prods={[]}
+          user={user}
+          userData={userData}
+          onAddToCart={addToCart}
+          onWish={toggleWish}
+          wishlist={wishlist}
+          onOpenProductUrl={openProductUrl}
+          loading
+        />
       ) : produits.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">{hub.emoji}</div>

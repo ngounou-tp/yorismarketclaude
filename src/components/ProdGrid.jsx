@@ -7,7 +7,8 @@ import { ModalCommander } from "./ModalCommander";
 import { SocialProofLine } from "./conversion/SocialProofLine";
 import { buildProductWhatsAppText, openWhatsAppShare } from "../lib/shareUtils";
 import { isPurchasable } from "../lib/stockStatus";
-import { effectiveProductPrice, isPromoActive, productPromoListPrice } from "../lib/productPricing";
+import { effectiveProductPrice, isPromoActive } from "../lib/productPricing";
+import { SkeletonCard } from "./SkeletonCard";
 
 const LazyFicheProduit = lazy(() =>
   import("./FicheProduit").then((m) => ({ default: m.FicheProduit }))
@@ -17,31 +18,45 @@ const LazyFicheProduit = lazy(() =>
 // COMPOSANT : GRILLE PRODUITS (avec images optimisées Cloudinary)
 // ─────────────────────────────────────────────────────────────
 export function ProdGrid({
-  prods,
+  prods = [],
   user,
   userData,
   onAddToCart,
   onWish,
   wishlist,
-  onOpenProd,
   onOpenProductUrl,
   siteLocale = "fr",
   showShare = false,
+  loading = false,
 }) {
   const [ficheOpen, setFicheOpen] = useState(null);
-  const [cmdOpen, setCmdOpen]     = useState(null);
-  const [addedIds, setAddedIds]   = useState(new Set());
+  const [cmdOpen, setCmdOpen] = useState(null);
+  const [addedIds, setAddedIds] = useState(new Set());
 
-  const handleAdd = useCallback((p) => {
-    if (!isPurchasable(p)) return;
-    onAddToCart(p);
-    setAddedIds((prev) => {
-      const next = new Set(prev);
-      next.add(p.id);
-      setTimeout(() => setAddedIds((s) => { const c = new Set(s); c.delete(p.id); return c; }), 1200);
-      return next;
-    });
-  }, [onAddToCart]);
+  const handleAdd = useCallback(
+    (p) => {
+      if (!isPurchasable(p)) return;
+      onAddToCart(p);
+      setAddedIds((prev) => {
+        const next = new Set(prev);
+        next.add(p.id);
+        setTimeout(
+          () => setAddedIds((s) => {
+            const c = new Set(s);
+            c.delete(p.id);
+            return c;
+          }),
+          1200,
+        );
+        return next;
+      });
+    },
+    [onAddToCart],
+  );
+
+  if (loading) {
+    return <SkeletonCard count={8} />;
+  }
 
   // ── Image sécurisée
   const getSafeImg = (p) => {
@@ -53,28 +68,26 @@ export function ProdGrid({
   // ── Badges vendeur
   const getVendeurBadges = (p) => {
     const badges = [];
-    if (p.sponsorise)                   badges.push({ label: "⭐ Top Vendeur",   cls: "badge-top" });
-    if (p.verifie || p.vendeur_verifie) badges.push({ label: "✅ Vérifié",        cls: "badge-verif" });
-    if (isPromoActive(p))               badges.push({ label: "🔥 Promo du jour", cls: "badge-promo" });
-    if (p.flash)                        badges.push({ label: "⚡ Offre flash",   cls: "badge-flash" });
-    if (p.vente_total > 50)             badges.push({ label: "🏆 Best seller",   cls: "badge-best" });
+    if (p.sponsorise) badges.push({ label: "⭐ Top Vendeur", cls: "badge-top" });
+    if (p.verifie || p.vendeur_verifie) badges.push({ label: "✅ Vérifié", cls: "badge-verif" });
+    if (isPromoActive(p)) badges.push({ label: "🔥 Promo du jour", cls: "badge-promo" });
+    if (p.flash) badges.push({ label: "⚡ Offre flash", cls: "badge-flash" });
+    if (p.vente_total > 50) badges.push({ label: "🏆 Best seller", cls: "badge-best" });
     return badges;
   };
 
   return (
     <>
       <div className="prod-grid">
-        {prods.map(p => {
-          const safeImg    = getSafeImg(p);
+        {prods.map((p) => {
+          const safeImg = getSafeImg(p);
           const stockClass = p.stock > 5 ? "stock-ok" : p.stock > 0 ? "stock-low" : "stock-out";
           const vendBadges = getVendeurBadges(p);
-          const prixPromo  = isPromoActive(p) ? effectiveProductPrice(p) : null;
-          const prixBarre  = productPromoListPrice(p);
-          const buyable    = isPurchasable(p);
+          const prixPromo = isPromoActive(p) ? effectiveProductPrice(p) : null;
+          const buyable = isPurchasable(p);
 
           return (
             <div key={p.id} className={`prod-card${p.flash ? " prod-card-flash" : ""}`}>
-              {/* ── IMAGE OPTIMISÉE (lazy + WebP + compression auto) ── */}
               <div
                 className="prod-img-wrap"
                 onClick={() => {
@@ -89,11 +102,11 @@ export function ProdGrid({
                   fallbackEmoji="📦"
                   style={{ width: "100%", height: "100%" }}
                 />
-                {p.flash                             && <span className="pbadge-flash">⚡ Flash</span>}
-                {!p.flash && isPromoActive(p)        && <span className="pbadge-promo">-{p.promo_pct || 15}%</span>}
+                {p.flash && <span className="pbadge-flash">⚡ Flash</span>}
+                {!p.flash && isPromoActive(p) && <span className="pbadge-promo">-{p.promo_pct || 15}%</span>}
                 {!p.flash && !p.promo && p.sponsorise && <span className="pbadge-r">⭐ Top</span>}
                 {resolveMadeInCameroon(p).show && <MadeInCameroonBadge product={p} size="sm" />}
-                {p.escrow                            && <span className="escrow-badge">🔐</span>}
+                {p.escrow && <span className="escrow-badge">🔐</span>}
                 {!buyable && (
                   <span
                     style={{
@@ -109,7 +122,10 @@ export function ProdGrid({
                 )}
                 <button
                   className="wish-btn"
-                  onClick={e => { e.stopPropagation(); onWish(p.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onWish(p.id);
+                  }}
                 >
                   {wishlist.has(p.id) ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#e11d48" stroke="#e11d48" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -119,7 +135,6 @@ export function ProdGrid({
                 </button>
               </div>
 
-              {/* ── INFOS ── */}
               <div
                 className="prod-info"
                 onClick={() => {
@@ -129,7 +144,7 @@ export function ProdGrid({
               >
                 {vendBadges.length > 0 && (
                   <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 4 }}>
-                    {vendBadges.map(b => (
+                    {vendBadges.map((b) => (
                       <span key={b.label} className={`vendor-badge ${b.cls}`}>{b.label}</span>
                     ))}
                   </div>
@@ -137,7 +152,7 @@ export function ProdGrid({
 
                 <div className="prod-name">{p.name_fr}</div>
                 <div className="prod-loc">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0"/><circle cx="12" cy="10" r="3"/></svg>
                   {p.ville || "Cameroun"}{p.vendeur_nom ? ` · ${p.vendeur_nom}` : ""}
                 </div>
                 <SocialProofLine product={p} locale={siteLocale} />
@@ -188,14 +203,16 @@ export function ProdGrid({
                     aria-disabled={!buyable}
                     title={buyable ? "Ajouter au panier" : "Produit indisponible"}
                     style={!buyable ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
-                    onClick={e => { e.stopPropagation(); handleAdd(p); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAdd(p);
+                    }}
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              {/* ── BOUTON PANIER ── */}
               <div className="prod-actions" style={{ padding: "0 11px 11px", display: "flex", flexDirection: "column", gap: 6 }}>
                 <button
                   className="add-btn-full"
@@ -213,7 +230,10 @@ export function ProdGrid({
                     transform: addedIds.has(p.id) ? "scale(.97)" : "none",
                     transition: "background .2s, transform .15s",
                   }}
-                  onClick={e => { e.stopPropagation(); handleAdd(p); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAdd(p);
+                  }}
                 >
                   {addedIds.has(p.id) ? (
                     <>

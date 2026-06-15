@@ -551,10 +551,16 @@ export function HomePage({
           </div>
 
           {produitsLoading ? (
-            <div className="yhm3-loading">
-              <div className="yhm3-spinner" />
-              Chargement du marché…
-            </div>
+            <ProdGrid
+              prods={[]}
+              user={user}
+              userData={userData}
+              onAddToCart={addToCart}
+              onWish={toggleWish}
+              wishlist={wishlist}
+              onOpenProductUrl={openProductUrl}
+              loading
+            />
           ) : safeProduits.length === 0 ? (
             <div className="yhm3-empty">
               <div className="yhm3-empty-ico">🛍️</div>

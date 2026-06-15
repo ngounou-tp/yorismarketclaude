@@ -59,9 +59,16 @@ export function ProductRouteSections({
           onLegacyCatChange={setFilterCat}
         />
         {produitsLoading ? (
-          <div className="loading">
-            <div className="spinner" /> Chargement...
-          </div>
+          <ProdGrid
+            prods={[]}
+            user={user}
+            userData={userData}
+            onAddToCart={addToCart}
+            onWish={toggleWish}
+            wishlist={wishlist}
+            onOpenProductUrl={openProductUrl}
+            loading
+          />
         ) : produitsFiltres.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🔍</div>
