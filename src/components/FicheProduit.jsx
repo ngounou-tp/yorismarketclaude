@@ -126,7 +126,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
           {/* COLONNE GAUCHE : IMAGES */}
           {images.length > 0 ? (
             <div style={{ marginBottom: 16 }}>
-            <div className="fiche-produit-hero-img" style={{
+              <div className="fiche-produit-hero-img" style={{
                 background: "var(--surface2)",
                 borderRadius: 12, overflow: "hidden",
                 marginBottom: 12, minHeight: 300,
@@ -134,8 +134,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
                 <OptimizedImage
                   src={currentImage}
                   alt={product.name_fr || "Produit Yorix"}
-                  width={800}
-                  priority={true}
+                  width={640}
                   fallbackEmoji="📦"
                   objectFit="contain"
                   className="img-main"
@@ -247,7 +246,7 @@ export function FicheProduit({ product, user, userData, onClose, onAddToCart, si
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <div className="fp-action-bar" style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
               <button
                 className="btn-cmd-sm"
                 disabled={!buyable}

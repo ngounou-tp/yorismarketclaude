@@ -3713,6 +3713,19 @@ img, video {
     line-height: 1.7 !important;
     color: var(--gray, #6b7a72) !important;
   }
+  .fp-action-bar {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .fp-action-bar > button,
+  .fp-add-cart,
+  .btn-cmd-sm {
+    width: 100% !important;
+    min-height: 48px !important;
+  }
+  .btn-cmd-sm {
+    padding: 12px 14px !important;
+  }
 }
 
 /* ─── 3. CART DRAWER mobile ───────────────────────────────────────────────── */
