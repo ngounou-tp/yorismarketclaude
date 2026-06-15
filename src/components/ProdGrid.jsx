@@ -9,6 +9,7 @@ import { buildProductWhatsAppText, openWhatsAppShare } from "../lib/shareUtils";
 import { isPurchasable } from "../lib/stockStatus";
 import { effectiveProductPrice, isPromoActive } from "../lib/productPricing";
 import { SkeletonCard } from "./SkeletonCard";
+import { tokens } from "../utils/designTokens";
 
 const LazyFicheProduit = lazy(() =>
   import("./FicheProduit").then((m) => ({ default: m.FicheProduit }))
@@ -111,9 +112,9 @@ export function ProdGrid({
                   <span
                     style={{
                       position: "absolute", top: 8, left: 8, zIndex: 3,
-                      background: "rgba(206,17,38,.92)", color: "#fff",
-                      padding: "3px 9px", borderRadius: 999, fontSize: ".62rem",
-                      fontFamily: "'Syne',sans-serif", fontWeight: 800, letterSpacing: ".02em",
+                      background: "rgba(206,17,38,.92)", color: tokens.colors.surface,
+                      padding: `3px ${tokens.spacing.sm}`, borderRadius: tokens.radius.full, fontSize: ".62rem",
+                      fontFamily: tokens.typography.displayFontFamily, fontWeight: 800, letterSpacing: ".02em",
                       boxShadow: "0 4px 12px rgba(206,17,38,.35)",
                     }}
                   >
@@ -143,7 +144,7 @@ export function ProdGrid({
                 }}
               >
                 {vendBadges.length > 0 && (
-                  <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 4 }}>
+                  <div style={{ display: "flex", gap: tokens.spacing.xs, flexWrap: "wrap", marginBottom: tokens.spacing.xs }}>
                     {vendBadges.map((b) => (
                       <span key={b.label} className={`vendor-badge ${b.cls}`}>{b.label}</span>
                     ))}
@@ -187,7 +188,7 @@ export function ProdGrid({
                         <span className="price">
                           {prixPromo.toLocaleString()} <span className="price-unit">FCFA</span>
                         </span>
-                        <span style={{ fontSize: ".65rem", color: "var(--gray)", textDecoration: "line-through", marginLeft: 5 }}>
+                        <span style={{ fontSize: ".65rem", color: tokens.colors.textSecondary, textDecoration: "line-through", marginLeft: tokens.spacing.xs }}>
                           {p.prix?.toLocaleString()}
                         </span>
                       </>
@@ -219,13 +220,13 @@ export function ProdGrid({
                   disabled={!buyable}
                   aria-disabled={!buyable}
                   style={{
-                    width: "100%", padding: "8px", borderRadius: 8, fontSize: ".78rem",
-                    fontFamily: "'Syne',sans-serif", fontWeight: 700,
-                    background: addedIds.has(p.id) ? "#0f4a28" : buyable ? "var(--green)" : "var(--surface2)",
-                    color: buyable ? "#fff" : "var(--gray)",
-                    border: buyable ? "none" : "1px solid var(--border)",
+                    width: "100%", padding: tokens.spacing.sm, borderRadius: tokens.radius.md, fontSize: ".78rem",
+                    fontFamily: tokens.typography.displayFontFamily, fontWeight: tokens.typography.weights.bold,
+                    background: addedIds.has(p.id) ? tokens.colors.primaryDark : buyable ? tokens.colors.primary : "var(--surface2)",
+                    color: buyable ? tokens.colors.surface : tokens.colors.textSecondary,
+                    border: buyable ? "none" : `1px solid ${tokens.colors.border}`,
                     cursor: buyable ? "pointer" : "not-allowed",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: tokens.spacing.xs,
                     opacity: buyable ? 1 : 0.75,
                     transform: addedIds.has(p.id) ? "scale(.97)" : "none",
                     transition: "background .2s, transform .15s",

@@ -1,6 +1,18 @@
+import { tokens } from "../utils/designTokens";
+
+const skeletonVars = {
+  "--skeleton-surface": tokens.colors.surface,
+  "--skeleton-border": tokens.colors.border,
+  "--skeleton-base": tokens.colors.skeletonBase,
+  "--skeleton-highlight": tokens.colors.skeletonHighlight,
+  "--skeleton-card-radius": "14px",
+  "--skeleton-line-radius": tokens.radius.md,
+  "--skeleton-button-radius": tokens.radius.md,
+};
+
 function ProductCardSkeleton() {
   return (
-    <div className="prod-card skeleton-card" aria-hidden="true">
+    <div className="prod-card skeleton-card" style={skeletonVars} aria-hidden="true">
       <div className="prod-img-wrap">
         <span className="skeleton skeleton-img" />
       </div>
@@ -34,7 +46,7 @@ export function SkeletonCard({ count = 1 }) {
 
 export function ProductDetailSkeleton() {
   return (
-    <div className="fiche-skeleton" aria-label="Chargement du produit">
+    <div className="fiche-skeleton" style={skeletonVars} aria-label="Chargement du produit">
       <div className="fiche-skeleton-inner">
         <span className="skeleton fiche-skeleton-back" />
         <div className="fiche-produit-grid">

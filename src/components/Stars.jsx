@@ -1,14 +1,15 @@
 import { useState } from "react";
+import { tokens } from "../utils/designTokens";
 
 export function Stars({ value = 0, max = 5, onSelect = null, size = "normal" }) {
   const [hover, setHover] = useState(0);
   const current = hover || value;
-  const sz = size === "lg" ? "1.4rem" : ".75rem";
+  const sz = size === "lg" ? tokens.typography.sizes.lg : tokens.typography.sizes.xs;
 
   return (
     <div
       className={`stars-display${onSelect ? " star-input" : ""}`}
-      style={{ cursor: onSelect ? "pointer" : "default", gap: 2, display: "flex" }}
+      style={{ cursor: onSelect ? "pointer" : "default", gap: tokens.spacing.xs, display: "flex" }}
       role={onSelect ? "radiogroup" : undefined}
       aria-label={onSelect ? "Donner une note" : `Note: ${value} sur ${max}`}
     >
