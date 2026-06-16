@@ -58,7 +58,7 @@ export function MerchHubPage({
           onWish={toggleWish}
           wishlist={wishlist}
           onOpenProductUrl={openProductUrl}
-          loading
+          produitsLoading
         />
       ) : produits.length === 0 ? (
         <div className="empty-state">

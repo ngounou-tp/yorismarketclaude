@@ -67,7 +67,7 @@ export function ProductRouteSections({
             onWish={toggleWish}
             wishlist={wishlist}
             onOpenProductUrl={openProductUrl}
-            loading
+            produitsLoading
           />
         ) : produitsFiltres.length === 0 ? (
           <div className="empty-state">

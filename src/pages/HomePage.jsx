@@ -559,7 +559,7 @@ export function HomePage({
               onWish={toggleWish}
               wishlist={wishlist}
               onOpenProductUrl={openProductUrl}
-              loading
+              produitsLoading
             />
           ) : safeProduits.length === 0 ? (
             <div className="yhm3-empty">

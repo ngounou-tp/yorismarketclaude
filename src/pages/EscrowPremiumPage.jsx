@@ -1332,7 +1332,8 @@ export function EscrowPremiumPage({
               onWish={toggleWish}
               wishlist={wishlist}
               onOpenProductUrl={openProductUrl}
-              loading
+              produitsLoading 
+
             />
           ) : escrowProds.length === 0 ? (
             <div className="yesc3-empty">
